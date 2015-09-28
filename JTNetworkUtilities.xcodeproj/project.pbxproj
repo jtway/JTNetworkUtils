@@ -7,9 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B205A4F61BB6E76100CF4EA5 /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = B205A4F51BB6E76100CF4EA5 /* Host.swift */; settings = {ASSET_TAGS = (); }; };
+		B242B16F1BB55B6F00832CDF /* TODO.md in Sources */ = {isa = PBXBuildFile; fileRef = B242B16E1BB55B6F00832CDF /* TODO.md */; settings = {ASSET_TAGS = (); }; };
+		B26266D71BB813360031F3E5 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26266D61BB813360031F3E5 /* Util.swift */; settings = {ASSET_TAGS = (); }; };
 		B29C70751BB403C2003CE110 /* JTNetworkUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = B29C70741BB403C2003CE110 /* JTNetworkUtilities.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B29C707C1BB403C2003CE110 /* JTNetworkUtilities.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B29C70711BB403C2003CE110 /* JTNetworkUtilities.framework */; settings = {ASSET_TAGS = (); }; };
 		B29C70811BB403C2003CE110 /* JTNetworkUtilitiesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */; };
+		B29C708D1BB4059A003CE110 /* Ping.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C708C1BB4059A003CE110 /* Ping.swift */; settings = {ASSET_TAGS = (); }; };
+		B29C708F1BB40A43003CE110 /* SocketAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C708E1BB40A43003CE110 /* SocketAddress.swift */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -23,12 +28,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B205A4F51BB6E76100CF4EA5 /* Host.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Host.swift; sourceTree = "<group>"; };
+		B242B16E1BB55B6F00832CDF /* TODO.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
+		B26266D61BB813360031F3E5 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		B29C70711BB403C2003CE110 /* JTNetworkUtilities.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = JTNetworkUtilities.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B29C70741BB403C2003CE110 /* JTNetworkUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JTNetworkUtilities.h; sourceTree = "<group>"; };
 		B29C70761BB403C2003CE110 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B29C707B1BB403C2003CE110 /* JTNetworkUtilitiesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JTNetworkUtilitiesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JTNetworkUtilitiesTests.swift; sourceTree = "<group>"; };
 		B29C70821BB403C2003CE110 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B29C708C1BB4059A003CE110 /* Ping.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Ping.swift; path = "Shared Framework Sources/Ping.swift"; sourceTree = "<group>"; };
+		B29C708E1BB40A43003CE110 /* SocketAddress.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SocketAddress.swift; path = "Shared Framework Sources/SocketAddress.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +63,8 @@
 		B29C70671BB403C2003CE110 = {
 			isa = PBXGroup;
 			children = (
+				B242B16E1BB55B6F00832CDF /* TODO.md */,
+				B29C708B1BB403E9003CE110 /* Shared Framework Sources */,
 				B29C70731BB403C2003CE110 /* JTNetworkUtilities */,
 				B29C707F1BB403C2003CE110 /* JTNetworkUtilitiesTests */,
 				B29C70721BB403C2003CE110 /* Products */,
@@ -84,6 +96,17 @@
 				B29C70821BB403C2003CE110 /* Info.plist */,
 			);
 			path = JTNetworkUtilitiesTests;
+			sourceTree = "<group>";
+		};
+		B29C708B1BB403E9003CE110 /* Shared Framework Sources */ = {
+			isa = PBXGroup;
+			children = (
+				B29C708C1BB4059A003CE110 /* Ping.swift */,
+				B29C708E1BB40A43003CE110 /* SocketAddress.swift */,
+				B205A4F51BB6E76100CF4EA5 /* Host.swift */,
+				B26266D61BB813360031F3E5 /* Util.swift */,
+			);
+			name = "Shared Framework Sources";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -142,6 +165,7 @@
 		B29C70681BB403C2003CE110 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = "Josh Tway";
 				TargetAttributes = {
@@ -193,6 +217,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B29C708D1BB4059A003CE110 /* Ping.swift in Sources */,
+				B29C708F1BB40A43003CE110 /* SocketAddress.swift in Sources */,
+				B205A4F61BB6E76100CF4EA5 /* Host.swift in Sources */,
+				B26266D71BB813360031F3E5 /* Util.swift in Sources */,
+				B242B16F1BB55B6F00832CDF /* TODO.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,6 +336,7 @@
 		B29C70861BB403C2003CE110 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -317,12 +347,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.jtway.JTNetworkUtilities;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
 		B29C70871BB403C2003CE110 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -375,6 +407,7 @@
 				B29C70871BB403C2003CE110 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		B29C70881BB403C2003CE110 /* Build configuration list for PBXNativeTarget "JTNetworkUtilitiesTests" */ = {
 			isa = XCConfigurationList;
@@ -383,6 +416,7 @@
 				B29C708A1BB403C2003CE110 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
