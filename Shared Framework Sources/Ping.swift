@@ -316,17 +316,21 @@ public class Ping {
 
         print("Read event detected")
 
-        var socketAddrStorage = sockaddr_storage()
-
+        var socketAddress = sockaddr_storage()
         var socketAddressLength = socklen_t(sizeof(sockaddr_storage.self))
-        if socketAddress.family == AF_INET {
-            socketAddressLength = socklen_t(sizeof(sockaddr_in))
+
+        // This seems a bit hacky but it appears to be the best way to get "this" the way we want
+        if self.socketAddress.family == AF_INET {
+            if let socketAddress4: SocketAddress4 = self.socketAddress as? SocketAddress4 {
+                memcpy(&socketAddress, &socketAddress4.sin, sizeof(sockaddr_in))
+            }
         } else {
-            socketAddressLength = socklen_t(sizeof(sockaddr_in6))
+            if let socketAddress6: SocketAddress6 = self.socketAddress as? SocketAddress6 {
+                memcpy(&socketAddress, &socketAddress6.sin6, sizeof(sockaddr_in6))
+            }
         }
 
         let response = [UInt8](count: 4096, repeatedValue: 0)
-
         let UDPSocket = Int32(dispatch_source_get_handle(source))
 
         let pingResponseTime = NSDate().timeIntervalSince1970

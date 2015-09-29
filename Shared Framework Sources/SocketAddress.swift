@@ -13,6 +13,8 @@ public protocol SocketAddress {
     var stringValue: String? { get }
 
     var family: Int32 { get }
+//
+//    var sockaddrStorage: sockaddr_storage { get }
 
     func setFromString(str: String) -> Bool
 
@@ -35,6 +37,10 @@ public class SocketAddress6: SocketAddress {
     public var family: Int32 {
         return AF_INET6
     }
+//
+//    public var sockaddrStorage: sockaddr_storage {
+//
+//    }
 
     // MARK: Initializers
 
@@ -80,6 +86,10 @@ public class SocketAddress4: SocketAddress {
     public var family: Int32 {
         return AF_INET
     }
+
+//    public var sockaddrStorage: sockaddr_storage {
+//        
+//    }
 
     // MARK: Initializers
 
