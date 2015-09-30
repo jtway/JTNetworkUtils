@@ -10,7 +10,7 @@ import XCTest
 @testable import JTNetworkUtilities
 
 class JTNetworkUtilitiesTests: XCTestCase {
-    var queue: dispatch_queue_t = dispatch_queue_create("com.jtway.pingplayground.PingQueue", nil)
+    var queue: dispatch_queue_t = dispatch_queue_create("com.jtway.PingQueue", nil)
 
     override func setUp() {
         super.setUp()
@@ -26,7 +26,7 @@ class JTNetworkUtilitiesTests: XCTestCase {
 
         let pingExpectation = expectationWithDescription("Ping call expectation")
 
-        let pingTest = Ping(hostname: "74.207.230.99")
+        let pingTest = Ping(hostname: "www.jtway.com")
         pingTest.dispatchQueue = queue
 
         pingTest.start { (ipAddress, latency) in
@@ -38,7 +38,7 @@ class JTNetworkUtilitiesTests: XCTestCase {
 
         waitForExpectationsWithTimeout(6.0) { error in
             if error != nil {
-                print("Test completion handler called with error. \(error?.localizedDescription)")
+                print("Test completion handler called with error. \(error!.localizedDescription)")
             }
         }
     }

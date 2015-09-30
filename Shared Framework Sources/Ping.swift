@@ -12,6 +12,22 @@ import Darwin
 
 // @TODO Add ICMP6EchoHeader
 
+// MARK: - IP Header
+
+// @TODO Find a new home for this and fix sourceAddress and destinationAddress (in C they are both an array of 4 uint8_t)
+public struct IPHeader {
+    var versionAndHeaderLength: UInt8  = 0
+    var differentiatedServices: UInt8  = 0
+    var totalLength:            UInt16 = 0
+    var identification:         UInt16 = 0
+    var flagsAndFragmentOffset: UInt16 = 0
+    var timeToLive:             UInt8  = 0
+    var ipProtocol:             UInt8  = 0
+    var headerChecksum:         UInt16 = 0
+    var sourceAddress:          UInt64 = 0
+    var destinationAddress:     UInt64 = 0
+}
+
 public struct PingResponse {
     init(hostname: String, ipAddress: String, latency: Double) {
         self.hostname = hostname
@@ -31,6 +47,7 @@ public class Ping {
     public enum PingError: ErrorType {
         case BadFileDescriptor
         case Failed
+        case InvalidPingResponse
         case POSIXErrorCode(posixError: Int)
     }
 
@@ -42,26 +59,22 @@ public class Ping {
     // MARK: - Ping Configuration
 
     public struct Configuration {
-        var intervalInSeconds: UInt16 = 1
-        var timeoutInSeconds: Double = 10.0 // unused (should be though)
-        var timeToLiveInSeconds: UInt32 = 0 // unused (should be though)
-        var payloadSizeInBytes: UInt16 = 64
-        var count: UInt32 = 0
-    }
 
-    // MARK: - IP Header
+        /// Interval in milliseconds between pings. Must be between 100ms and 60000ms (1 minute)
+        var intervalInMS: UInt32 = 1000 {
+            didSet {
+                if intervalInMS < 100 {
+                    intervalInMS = 100
+                } else if intervalInMS > 60000 {
+                    intervalInMS = 60000
+                }
+            }
+        }
 
-    public struct IPHeader {
-        var versionAndHeaderLength: UInt8  = 0
-        var differentiatedServices: UInt8  = 0
-        var totalLength:            UInt16 = 0
-        var identification:         UInt16 = 0
-        var flagsAndFragmentOffset: UInt16 = 0
-        var timeToLive:             UInt8  = 0
-        var ipProtocol:             UInt8  = 0
-        var headerChecksum:         UInt16 = 0
-        var sourceAddress:          UInt64 = 0
-        var destinationAddress:     UInt64 = 0
+        var timeoutInSeconds:    Double = 10.0 // unused (should be though)
+        var timeToLiveInSeconds: UInt32 = 0    // unused (should be though)
+        var payloadSizeInBytes:  UInt16 = 64
+        var count:               UInt32 = 1
     }
 
     // MARK: - ICMP Echo Header
@@ -81,18 +94,18 @@ public class Ping {
 
     // MARK: - Public Properties
 
-    /// A serial dispatch queue to read ping responses on, must be serial.
+    /// A dispatch queue to read ping responses on
     public var dispatchQueue: dispatch_queue_t = dispatch_get_main_queue()
     public var configuration: Configuration = Configuration()
 
     // MARK: - Private Properties
 
+    /// A dispatch source for reading data from the UDP socket.
+    private var responseSource: dispatch_source_t?
+
     private let identifier: UInt16 = UInt16(arc4random_uniform(UInt32(UINT16_MAX)))
     private var nextSequenceNumber: UInt16 = 1
     private var pingSentTime: NSTimeInterval = 0
-
-    /// A dispatch source for reading data from the UDP socket.
-    private var responseSource: dispatch_source_t?
 
     private var completionHandler: PingCompletionHandler!
     private var pingResponseHandler: PingResponseHandler!
@@ -110,10 +123,6 @@ public class Ping {
 
     public init(hostname: String) {
         self.hostname = hostname
-    }
-
-    public init(hostAddress: NSData) {
-        self.hostAddress = hostAddress.copy() as! NSData
     }
 
     public init(ipAddress: String) {
@@ -135,60 +144,43 @@ public class Ping {
             return false
         }
 
-        if hostAddress != nil {
-            startWithHostAddress()
-        } else {
-            if hostname == nil {
-                return false
-            }
-
-            host = CFHostCreateWithName(kCFAllocatorDefault, hostname).takeRetainedValue()
-
-            let success : Bool = CFHostStartInfoResolution(host!, CFHostInfoType.Addresses, nil)
-            if !success {
-                print("Failed to start hostname resolution for \(hostname)")
-                return false
-            }
-
-            var resolved : DarwinBoolean = false
-            guard let cfAddresses = CFHostGetAddressing(host, &resolved)?.takeRetainedValue() else {
-                print("Unable to get addressing for \(hostname)")
-                return false
-            }
-
-            let addresses = cfAddresses as NSArray
-
-            if !resolved {
-                print("Unable to resolve \(hostname)")
-                return false
-            }
-
-            print("Resolved \(hostname). \(addresses.count) addresses")
-            for addressCFData in addresses {
-                guard let addressData : NSData = addressCFData as? NSData else {
-                    print("Unable to convert CFData to NSData")
-                    continue
-                }
-
-                var socketAddress : sockaddr_storage = sockaddr_storage()
-
-                addressData.getBytes(&socketAddress, length: sizeof(sockaddr_storage))
-
-                guard let endpoint = withUnsafePointer(&socketAddress, { self.getEndpointFromSocketAddress(UnsafePointer($0)) }) else {
-                    print("Failed to get the address and port from the socket address")
-                    continue
-                }
-
-                print("IP Address: \(endpoint.host)")
-
-                hostIPAddress = endpoint.host
-                hostAddress = addressData.copy() as! NSData
-                break
-            }
-            if hostAddress != nil {
-                startWithHostAddress()
-            }
+        var socketFd : Int32 = -1
+        switch socketAddress.family {
+        case AF_INET:
+            socketFd = Darwin.socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
+        case AF_INET6:
+            socketFd = Darwin.socket(AF_INET6, SOCK_DGRAM, IPPROTO_ICMPV6)
+        default:
+            break
         }
+
+        // @TODO error handling
+        guard socketFd > 0 else {
+            print("Unable to create socket for ping")
+            return false
+        }
+
+        guard let newResponseSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, UInt(socketFd), 0, dispatchQueue) else {
+            print("Unable to set dispatch read source")
+            close(socketFd)
+            return false
+        }
+
+        dispatch_source_set_cancel_handler(newResponseSource) {
+            print("closing udp socket for connection \(self.identifier)")
+            self.stop()
+        }
+
+        dispatch_source_set_event_handler(newResponseSource) {
+            self.readData()
+        }
+
+        dispatch_resume(newResponseSource)
+        responseSource = newResponseSource
+
+        print("Sending ping")
+        
+        try! sendPing()
 
         return true
     }
@@ -202,10 +194,12 @@ public class Ping {
         }
     }
 
+    // MARK: - Send Ping & Read Ping Response
+
     func sendPing() throws {
 
-        let sent : Int
-        var error : Int32 = 0
+        var sent: Int = -1
+        var error: Int32 = 0
 
         guard let source = responseSource else {
             return
@@ -224,18 +218,22 @@ public class Ping {
 
         // Send the packet.
 
-        let serverAddress = SocketAddress4()
-        guard serverAddress.setFromString(hostIPAddress) else {
-            print("Failed to convert \(hostIPAddress) into an IPv4 address")
-            return
-        }
-
         if hostname == nil {
-            hostname = serverAddress.stringValue
+            hostname = socketAddress.stringValue
         }
 
-        sent = withUnsafePointer(&serverAddress.sin) {
-            sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(serverAddress.sin.sin_len))
+        if socketAddress.family == AF_INET {
+            if let socketAddress4: SocketAddress4 = self.socketAddress as? SocketAddress4 {
+                sent = withUnsafePointer(&socketAddress4.sin) {
+                    sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(socketAddress4.sin.sin_len))
+                }
+            }
+        } else if socketAddress.family == AF_INET6 {
+            if let socketAddress6: SocketAddress6 = self.socketAddress as? SocketAddress6 {
+                sent = withUnsafePointer(&socketAddress6.sin6) {
+                    sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(socketAddress6.sin6.sin6_len))
+                }
+            }
         }
 
         pingSentTime = NSDate().timeIntervalSince1970
@@ -256,56 +254,6 @@ public class Ping {
             }
             return
         }
-
-        print("Ping sent")
-
-    }
-
-    // MARK: - Actual ping start
-
-    func startWithHostAddress() {
-//        var socketAddress : sockaddr = sockaddr()
-//
-//        hostAddress.getBytes(&socketAddress, length: sizeof(sockaddr))
-
-        var socketFd : Int32 = -1
-        switch socketAddress.family {
-        case AF_INET:
-            socketFd = Darwin.socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
-        case AF_INET6:
-            socketFd = Darwin.socket(AF_INET6, SOCK_DGRAM, IPPROTO_ICMPV6)
-        default:
-            break
-        }
-
-        // @TODO error handling
-        guard socketFd > 0 else {
-            print("Unable to create socket for ping")
-            return
-        }
-
-        guard let newResponseSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, UInt(socketFd), 0, dispatchQueue) else {
-            print("Unable to set dispatch read source")
-            close(socketFd)
-            return
-        }
-
-        dispatch_source_set_cancel_handler(newResponseSource) {
-            print("closing udp socket for connection \(self.identifier)")
-            self.stop()
-        }
-
-        dispatch_source_set_event_handler(newResponseSource) {
-            self.readData()
-        }
-
-        dispatch_resume(newResponseSource)
-        responseSource = newResponseSource
-
-        print("Sending ping")
-
-        try! sendPing()
-
     }
 
     func readData() {
@@ -313,8 +261,6 @@ public class Ping {
             print("Unable to get source")
             return
         }
-
-        print("Read event detected")
 
         var socketAddress = sockaddr_storage()
         var socketAddressLength = socklen_t(sizeof(sockaddr_storage.self))
@@ -362,14 +308,22 @@ public class Ping {
         let responseDatagram = NSData(bytes: UnsafePointer<Void>(response), length: bytesRead)
         print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(endpoint.host) port = \(endpoint.port)")
 
+        let host = (self.hostname != nil ? self.hostname : self.hostIPAddress)
+
         if !self.isValidPingResponsePacket(responseDatagram.mutableCopy() as! NSMutableData) {
             print("Did not receive a valid ping response")
+
+            // Stop, aka close the socket
             self.stop()
+            // Call ping response handler with negative time.
+            self.pingResponseHandler(ipAddress: host, latency: -1)
+            // @TODO Should I throw an error here? (Wish they would have called it emit error...)
+
             return
         }
 
         let latency = (pingResponseTime - self.pingSentTime) * 1000.0
-        let host = (self.hostname != nil ? self.hostname : self.hostIPAddress)
+
         self.pingResponseHandler(ipAddress: host, latency: latency)
     }
 
@@ -486,12 +440,14 @@ public class Ping {
         return true
     }
 
+    // MARK: - Static member utilities
+    
     static func icmpHeaderOffsetInPacket(packet: NSData) -> Int {
         // Returns the offset of the ICMPHeader within an IP packet.
 
-        print("Size of IPHeader: \(sizeof(Ping.IPHeader.self)), size of ICMPEchoHeader: \(sizeof(Ping.ICMPEchoHeader.self))")
+        print("Size of IPHeader: \(sizeof(IPHeader.self)), size of ICMPEchoHeader: \(sizeof(Ping.ICMPEchoHeader.self))")
 
-        let expectedLength: Int = sizeof(Ping.IPHeader.self) + sizeof(Ping.ICMPEchoHeader.self)
+        let expectedLength: Int = sizeof(IPHeader.self) + sizeof(Ping.ICMPEchoHeader.self)
 
         print("Expected at least \(expectedLength) bytes, packet is \(packet.length) bytes")
 
@@ -501,7 +457,7 @@ public class Ping {
         }
 
         print("Grabbing IP Header. Packet bytes: \(packet.bytes)")
-        let ipHeader = UnsafePointer<Ping.IPHeader>(packet.bytes).memory
+        let ipHeader = UnsafePointer<IPHeader>(packet.bytes).memory
         print(ipHeader)
         if (ipHeader.versionAndHeaderLength & 0xF0) != 0x40 {
             print("Version mismatch")
@@ -569,5 +525,4 @@ public class Ping {
         
         return ~answer;
     }
-    
 }
