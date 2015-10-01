@@ -87,5 +87,4 @@ public class Host {
     init(anotherHost: Host) {
         socketAddresses = anotherHost.socketAddresses
     }
-
 }
