@@ -125,10 +125,6 @@ public class Ping {
         self.hostname = hostname
     }
 
-    public init(ipAddress: String) {
-
-    }
-
     // MARK: - Ping start/stop public methods
 
     public func start(responseHandler: PingResponseHandler) -> Bool {

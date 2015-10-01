@@ -95,10 +95,89 @@ class JTNetworkUtilitiesTests: XCTestCase {
         }
     }
 
+    func testHostFromHostname() {
+        let host: Host = Host(hostname: "www.google.com")
+
+        XCTAssertNotNil(host.hostname)
+        XCTAssertNotNil(host.address)
+
+        XCTAssertGreaterThan(host.addresses.count, 0)
+        XCTAssertGreaterThan(host.hostnames.count, 0)
+
+        print("Hostnme: \(host.hostname!)")
+        print("IP Address: \(host.address!)")
+
+        var sIPAddresses = ""
+        for ipAddress in host.addresses {
+            sIPAddresses += ipAddress + " "
+        }
+
+        print("All IP Adddresses: \(sIPAddresses)")
+
+        let anotherHost: Host = Host(hostname: "www.jtway.com")
+
+        XCTAssertNotNil(anotherHost.hostname)
+        XCTAssertNotNil(anotherHost.address)
+
+        XCTAssertGreaterThan(anotherHost.addresses.count, 0)
+        XCTAssertGreaterThan(anotherHost.hostnames.count, 0)
+
+        print("Hostnme: \(anotherHost.hostname!)")
+        print("IP Address: \(anotherHost.address!)")
+
+        sIPAddresses = ""
+        for ipAddress in anotherHost.addresses {
+            sIPAddresses += ipAddress + " "
+        }
+
+        print("All IP Adddresses: \(sIPAddresses)")
+    }
+
+    func testHostFromIPAddress() {
+        let host: Host = Host(address: "65.196.188.54")
+
+        XCTAssertNotNil(host.hostname)
+        XCTAssertNotNil(host.address)
+
+        XCTAssertGreaterThan(host.addresses.count, 0)
+        XCTAssertGreaterThan(host.hostnames.count, 0)
+
+        print("Hostnme: \(host.hostname!)")
+        print("IP Address: \(host.address!)")
+
+        var sIPAddresses = ""
+        for ipAddress in host.addresses {
+            sIPAddresses += ipAddress + " "
+        }
+
+        print("All IP Adddresses: \(sIPAddresses)")
+    }
+
+    func testHostFromIPv6Address() {
+        let host: Host = Host(address: "2600:3c02::f03c:91ff:fe6e:993c")
+
+        XCTAssertNotNil(host.hostname)
+        XCTAssertNotNil(host.address)
+
+        XCTAssertGreaterThan(host.addresses.count, 0)
+        XCTAssertGreaterThan(host.hostnames.count, 0)
+
+        print("Hostnme: \(host.hostname!)")
+        print("IP Address: \(host.address!)")
+
+        var sIPAddresses = ""
+        for ipAddress in host.addresses {
+            sIPAddresses += ipAddress + " "
+        }
+
+        print("All IP Adddresses: \(sIPAddresses)")
+    }
+
     func testPerformanceExample() {
-        // This is an example of a performance test case.
+
         self.measureBlock {
-            // Put the code you want to measure the time of here.
+            let host: Host = Host(hostname: "www.google.com")
+            print("IP Address: \(host.address!)")
         }
     }
     

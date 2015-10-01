@@ -9,7 +9,7 @@
 import Foundation
 import Darwin
 
-// MARK: Utility Functions
+// MARK: sockaddr Utilities
 
 /// Convert a sockaddr structure to a string.
 func saToString(sa: UnsafePointer<sockaddr>) -> String? {
@@ -31,6 +31,8 @@ func saToHostname(sa: UnsafePointer<sockaddr>) -> String? {
 
     return String.fromCString(hostBuffer)
 }
+
+// MARK: - Hostname Utilities
 
 func hostnameToAddressStrings(hostname: String) -> [String]? {
 
