@@ -502,15 +502,12 @@ public class Ping {
             
             index++
             bytesRemaining -= 2
-            //            sum += Int32(cursor[0])
-            //            cursor.advancedBy(1)
         }
         
         /* mop up an odd byte, if necessary */
         if bytesRemaining == 1 {
             // @TODO How the heck should I do this without creating another unsafe pointer?
             print("We should do something here")
-            //            sum += Int32(UInt8(cursor[0]))
         }
         
         /* add back carry outs from top 16 bits to low 16 bits */
