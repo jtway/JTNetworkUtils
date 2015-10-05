@@ -16,16 +16,26 @@ import Darwin
 
 // @TODO Find a new home for this and fix sourceAddress and destinationAddress (in C they are both an array of 4 uint8_t)
 public struct IPHeader {
-    var versionAndHeaderLength: UInt8  = 0
-    var differentiatedServices: UInt8  = 0
-    var totalLength:            UInt16 = 0
-    var identification:         UInt16 = 0
-    var flagsAndFragmentOffset: UInt16 = 0
-    var timeToLive:             UInt8  = 0
-    var ipProtocol:             UInt8  = 0
-    var headerChecksum:         UInt16 = 0
-    var sourceAddress:          UInt64 = 0
-    var destinationAddress:     UInt64 = 0
+    var versionAndHeaderLength: UInt8   = 0
+    var differentiatedServices: UInt8   = 0
+    var totalLength:            UInt16  = 0
+    var identification:         UInt16  = 0
+    var flagsAndFragmentOffset: UInt16  = 0
+    var timeToLive:             UInt8   = 0
+    var ipProtocol:             UInt8   = 0
+    var headerChecksum:         UInt16  = 0
+    var sourceAddress:          in_addr = in_addr()
+    var destinationAddress:     in_addr = in_addr()
+}
+
+public struct IP6Header {
+    var versionAndTCAndFlow: UInt32   = 0
+    var payloadLength:       UInt16   = 0
+    var nextHeader:          UInt8    = 0
+    var hopLimit:            UInt8    = 0
+    var sourceAddress:       in6_addr = in6_addr()
+    var destinationAddress:  in6_addr = in6_addr()
+
 }
 
 public struct PingResponse {
@@ -52,8 +62,13 @@ public class Ping {
     }
 
     public enum ICMPType: UInt8 {
-        case EchoReply = 0
+        case EchoReply   = 0
         case EchoRequest = 8
+    }
+
+    public enum ICMP6Type: UInt8 {
+        case EchoRequest = 128
+        case EchoReply   = 129
     }
 
     // MARK: - Ping Configuration
@@ -87,6 +102,13 @@ public class Ping {
         var sequenceNumber: UInt16 = 0
     }
 
+    struct ICMPv6PseudoHeader {
+        var sourceAddress:       in6_addr = in6_addr()
+        var destinationAddress:  in6_addr = in6_addr()
+        var packetLength:          UInt32 = 0
+        var checksumAndNextHeader: UInt32 = 0
+    }
+
     // MARK: - completion handlers
 
     public typealias PingResponseHandler = (ipAddress : String, latency : NSTimeInterval) -> Void
@@ -110,19 +132,19 @@ public class Ping {
     private var completionHandler: PingCompletionHandler!
     private var pingResponseHandler: PingResponseHandler!
 
+    private var host: Host
     private var hostname: String!
     private var hostIPAddress: String!
 
     private var socketAddress: SocketAddress!
 
-    private var hostAddress: NSData!
-    private var host: CFHostRef!
     private var socketFd: Int32 = -1
 
     // MARK: - Initializers
 
     public init(hostname: String) {
         self.hostname = hostname
+        host = Host(hostname: hostname)
     }
 
     // MARK: - Ping start/stop public methods
@@ -368,12 +390,15 @@ public class Ping {
         //   With that in mind for code readabilty we're going to copy the header and payload into the final packet.
         var icmpEchoPacket = ICMPEchoHeader()
 
-        icmpEchoPacket.type = ICMPType.EchoRequest.rawValue
+        if socketAddress.family == AF_INET {
+            icmpEchoPacket.type = ICMPType.EchoRequest.rawValue
+        } else {
+            icmpEchoPacket.type = ICMP6Type.EchoRequest.rawValue
+        }
         icmpEchoPacket.code = 0
         icmpEchoPacket.checksum = 0
         icmpEchoPacket.identifier = CFSwapInt16HostToBig(identifier)
         icmpEchoPacket.sequenceNumber = CFSwapInt16HostToBig(nextSequenceNumber)
-
 
         memcpy(UnsafeMutablePointer<Void>(packet.mutableBytes), &icmpEchoPacket, sizeof(ICMPEchoHeader.self))
         memcpy(UnsafeMutablePointer<Void>(packet.mutableBytes) + sizeof(ICMPEchoHeader.self), payload.bytes, payload.length)
@@ -390,7 +415,17 @@ public class Ping {
     func isValidPingResponsePacket(packet: NSMutableData) -> Bool {
 
         print("Validating ping response")
-        let icmpHeaderOffset: Int = Ping.icmpHeaderOffsetInPacket(packet)
+        let icmpHeaderOffset: Int
+
+        if (socketAddress.family == AF_INET) {
+            icmpHeaderOffset = Ping.icmpHeaderOffsetInPacket(packet)
+        } else if (socketAddress.family == AF_INET6) {
+            // The IP header is not passed back from ICMPv6 using UDP
+            icmpHeaderOffset = 0
+        } else {
+            return false
+        }
+
         if icmpHeaderOffset == NSNotFound {
             return false
         }
@@ -403,18 +438,25 @@ public class Ping {
         let receivedCheckSum: UInt16 = icmpHeader.checksum
         icmpHeader.checksum = 0
 
-        memcpy(UnsafeMutablePointer<Void>(icmpHeaderPtr), &icmpHeader, sizeof(Ping.ICMPEchoHeader.self))
+        memcpy(UnsafeMutablePointer<Void>(icmpHeaderPtr), &icmpHeader, sizeof(ICMPEchoHeader.self))
 
-        let calculatedCheckSum: UInt16 = Ping.checksumIn(packet.mutableBytes + icmpHeaderOffset, length: packet.length - icmpHeaderOffset)
+        if (socketAddress.family == AF_INET) {
+            let calculatedCheckSum: UInt16 = Ping.checksumIn(packet.mutableBytes + icmpHeaderOffset, length: packet.length - icmpHeaderOffset)
 
-        if receivedCheckSum != calculatedCheckSum {
-            print("Received checksum (\(receivedCheckSum)) and calculated checksum (\(calculatedCheckSum)) do not match")
-            return false
-        }
+            if receivedCheckSum != calculatedCheckSum {
+                print("Received checksum (\(receivedCheckSum)) and calculated checksum (\(calculatedCheckSum)) do not match")
+                return false
+            }
 
-        if ICMPType(rawValue: icmpHeader.type) != .EchoReply {
-            print ("Did not receive an icmp packet with echo reply for the type")
-            return false
+            if ICMPType(rawValue: icmpHeader.type) != .EchoReply {
+                print ("Did not receive an icmp packet with echo reply for the type")
+                return false
+            }
+        } else {
+            if ICMP6Type(rawValue: icmpHeader.type) != .EchoReply {
+                print ("Did not receive an icmpv6 packet with echo reply for the type")
+                return false
+            }
         }
 
         if icmpHeader.code != 0 {
@@ -474,6 +516,47 @@ public class Ping {
         print("IP Header length: \(ipHeaderLength)")
         return ipHeaderLength
     }
+
+//    static func icmp6HeaderOffsetInPacket(packet: NSData) -> Int {
+//        // Returns the offset of the ICMPHeader within an IP packet.
+//
+//        print("Size of IPHeader: \(sizeof(IP6Header.self)), size of ICMPEchoHeader: \(sizeof(Ping.ICMPEchoHeader.self))")
+//
+//        let expectedLength: Int = sizeof(IP6Header.self) + sizeof(Ping.ICMPEchoHeader.self)
+//
+//        print("Expected at least \(expectedLength) bytes, packet is \(packet.length) bytes")
+//
+//        if packet.length < expectedLength {
+//            print("Ping response was too small. Was only \(packet.length) bytes")
+//            return NSNotFound
+//        }
+//
+//        print("Response Packet: \(packet)")
+//
+//        print("Grabbing IP Header. Packet bytes: \(packet.bytes)")
+//        let ipHeader = UnsafePointer<IP6Header>(packet.bytes).memory
+//        print(ipHeader)
+//
+//        print("Version, TC, and Flow: \(ipHeader.versionAndTCAndFlow)")
+//        let version = (ipHeader.versionAndTCAndFlow & 0xF0000000)
+//        print("Version: \(version)")
+//        if (ipHeader.versionAndTCAndFlow & 0xF0000000) != 0x60000000 {
+//            print("Version mismatch")
+//            return NSNotFound
+//        }
+//
+//
+////        let ipHeaderLength = Int(ipHeader.versionAndHeaderLength & 0x0F) * sizeof(UInt32)
+////        if packet.length < ipHeaderLength + sizeof(Ping.ICMPEchoHeader.self) {
+////            print("Packet length too small")
+////            return NSNotFound
+////        }
+//
+//        let ipHeaderLength = Int(ipHeader.nextHeader)
+//
+//        print("IP Header length: \(ipHeaderLength)")
+//        return ipHeaderLength
+//    }
 
     static func icmpInPacket(packet: NSData) -> ICMPEchoHeader {
         let header : ICMPEchoHeader = ICMPEchoHeader()
