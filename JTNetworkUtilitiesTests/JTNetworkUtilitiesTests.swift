@@ -43,6 +43,26 @@ class JTNetworkUtilitiesTests: XCTestCase {
         }
     }
 
+    func testPing6() {
+        let pingExpectation = expectationWithDescription("Ping call expectation")
+
+        let pingTest = Ping(hostname: "2600:3c02::f03c:91ff:fe6e:993c")
+        pingTest.dispatchQueue = queue
+
+        pingTest.start { (ipAddress, latency) in
+            // Do something
+            print("Ping response handler called. IP: \(ipAddress), Latency: \(latency)ms")
+            pingTest.stop()
+            pingExpectation.fulfill()
+        }
+
+        waitForExpectationsWithTimeout(6.0) { error in
+            if error != nil {
+                print("Test completion handler called with error. \(error!.localizedDescription)")
+            }
+        }
+    }
+
     func testHostResolution() {
         let hostname = "www.jtway.com"
 
@@ -99,16 +119,16 @@ class JTNetworkUtilitiesTests: XCTestCase {
         let host: Host = Host(hostname: "www.google.com")
 
         XCTAssertNotNil(host.hostname)
-        XCTAssertNotNil(host.address)
+        XCTAssertNotNil(host.ipAddress)
 
-        XCTAssertGreaterThan(host.addresses.count, 0)
+        XCTAssertGreaterThan(host.ipAddresses.count, 0)
         XCTAssertGreaterThan(host.hostnames.count, 0)
 
         print("Hostnme: \(host.hostname!)")
-        print("IP Address: \(host.address!)")
+        print("IP Address: \(host.ipAddress!)")
 
         var sIPAddresses = ""
-        for ipAddress in host.addresses {
+        for ipAddress in host.ipAddresses {
             sIPAddresses += ipAddress + " "
         }
 
@@ -117,16 +137,16 @@ class JTNetworkUtilitiesTests: XCTestCase {
         let anotherHost: Host = Host(hostname: "www.jtway.com")
 
         XCTAssertNotNil(anotherHost.hostname)
-        XCTAssertNotNil(anotherHost.address)
+        XCTAssertNotNil(anotherHost.ipAddress)
 
-        XCTAssertGreaterThan(anotherHost.addresses.count, 0)
+        XCTAssertGreaterThan(anotherHost.ipAddresses.count, 0)
         XCTAssertGreaterThan(anotherHost.hostnames.count, 0)
 
         print("Hostnme: \(anotherHost.hostname!)")
-        print("IP Address: \(anotherHost.address!)")
+        print("IP Address: \(anotherHost.ipAddress!)")
 
         sIPAddresses = ""
-        for ipAddress in anotherHost.addresses {
+        for ipAddress in anotherHost.ipAddresses {
             sIPAddresses += ipAddress + " "
         }
 
@@ -137,16 +157,16 @@ class JTNetworkUtilitiesTests: XCTestCase {
         let host: Host = Host(address: "65.196.188.54")
 
         XCTAssertNotNil(host.hostname)
-        XCTAssertNotNil(host.address)
+        XCTAssertNotNil(host.ipAddress)
 
-        XCTAssertGreaterThan(host.addresses.count, 0)
+        XCTAssertGreaterThan(host.ipAddresses.count, 0)
         XCTAssertGreaterThan(host.hostnames.count, 0)
 
         print("Hostnme: \(host.hostname!)")
-        print("IP Address: \(host.address!)")
+        print("IP Address: \(host.ipAddress!)")
 
         var sIPAddresses = ""
-        for ipAddress in host.addresses {
+        for ipAddress in host.ipAddresses {
             sIPAddresses += ipAddress + " "
         }
 
@@ -157,16 +177,16 @@ class JTNetworkUtilitiesTests: XCTestCase {
         let host: Host = Host(address: "2600:3c02::f03c:91ff:fe6e:993c")
 
         XCTAssertNotNil(host.hostname)
-        XCTAssertNotNil(host.address)
+        XCTAssertNotNil(host.ipAddress)
 
-        XCTAssertGreaterThan(host.addresses.count, 0)
+        XCTAssertGreaterThan(host.ipAddresses.count, 0)
         XCTAssertGreaterThan(host.hostnames.count, 0)
 
         print("Hostnme: \(host.hostname!)")
-        print("IP Address: \(host.address!)")
+        print("IP Address: \(host.ipAddress!)")
 
         var sIPAddresses = ""
-        for ipAddress in host.addresses {
+        for ipAddress in host.ipAddresses {
             sIPAddresses += ipAddress + " "
         }
 
@@ -177,7 +197,7 @@ class JTNetworkUtilitiesTests: XCTestCase {
 
         self.measureBlock {
             let host: Host = Host(hostname: "www.google.com")
-            print("IP Address: \(host.address!)")
+            print("IP Address: \(host.ipAddress!)")
         }
     }
     
