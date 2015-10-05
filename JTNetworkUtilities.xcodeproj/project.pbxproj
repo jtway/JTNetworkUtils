@@ -9,6 +9,13 @@
 /* Begin PBXBuildFile section */
 		B205A4F61BB6E76100CF4EA5 /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = B205A4F51BB6E76100CF4EA5 /* Host.swift */; settings = {ASSET_TAGS = (); }; };
 		B242B16F1BB55B6F00832CDF /* TODO.md in Sources */ = {isa = PBXBuildFile; fileRef = B242B16E1BB55B6F00832CDF /* TODO.md */; settings = {ASSET_TAGS = (); }; };
+		B250B3FE1BC13C9000426206 /* JTNetworkUtilitiesOSX.h in Headers */ = {isa = PBXBuildFile; fileRef = B250B3FD1BC13C9000426206 /* JTNetworkUtilitiesOSX.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B250B4051BC13C9000426206 /* JTNetworkUtilitiesOSX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B250B3FB1BC13C9000426206 /* JTNetworkUtilitiesOSX.framework */; settings = {ASSET_TAGS = (); }; };
+		B250B40A1BC13C9000426206 /* JTNetworkUtilitiesOSXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B250B4091BC13C9000426206 /* JTNetworkUtilitiesOSXTests.swift */; };
+		B250B4121BC13CD400426206 /* Ping.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C708C1BB4059A003CE110 /* Ping.swift */; settings = {ASSET_TAGS = (); }; };
+		B250B4131BC13CD400426206 /* SocketAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C708E1BB40A43003CE110 /* SocketAddress.swift */; settings = {ASSET_TAGS = (); }; };
+		B250B4141BC13CD400426206 /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = B205A4F51BB6E76100CF4EA5 /* Host.swift */; settings = {ASSET_TAGS = (); }; };
+		B250B4151BC13CD400426206 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26266D61BB813360031F3E5 /* Util.swift */; settings = {ASSET_TAGS = (); }; };
 		B26266D71BB813360031F3E5 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26266D61BB813360031F3E5 /* Util.swift */; settings = {ASSET_TAGS = (); }; };
 		B29C70751BB403C2003CE110 /* JTNetworkUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = B29C70741BB403C2003CE110 /* JTNetworkUtilities.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B29C707C1BB403C2003CE110 /* JTNetworkUtilities.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B29C70711BB403C2003CE110 /* JTNetworkUtilities.framework */; settings = {ASSET_TAGS = (); }; };
@@ -18,6 +25,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		B250B4061BC13C9000426206 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B29C70681BB403C2003CE110 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B250B3FA1BC13C9000426206;
+			remoteInfo = JTNetworkUtilitiesOSX;
+		};
 		B29C707D1BB403C2003CE110 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B29C70681BB403C2003CE110 /* Project object */;
@@ -30,6 +44,12 @@
 /* Begin PBXFileReference section */
 		B205A4F51BB6E76100CF4EA5 /* Host.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Host.swift; sourceTree = "<group>"; };
 		B242B16E1BB55B6F00832CDF /* TODO.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
+		B250B3FB1BC13C9000426206 /* JTNetworkUtilitiesOSX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = JTNetworkUtilitiesOSX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B250B3FD1BC13C9000426206 /* JTNetworkUtilitiesOSX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JTNetworkUtilitiesOSX.h; sourceTree = "<group>"; };
+		B250B3FF1BC13C9000426206 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B250B4041BC13C9000426206 /* JTNetworkUtilitiesOSXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JTNetworkUtilitiesOSXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B250B4091BC13C9000426206 /* JTNetworkUtilitiesOSXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JTNetworkUtilitiesOSXTests.swift; sourceTree = "<group>"; };
+		B250B40B1BC13C9000426206 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B26266D61BB813360031F3E5 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		B29C70711BB403C2003CE110 /* JTNetworkUtilities.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = JTNetworkUtilities.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B29C70741BB403C2003CE110 /* JTNetworkUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JTNetworkUtilities.h; sourceTree = "<group>"; };
@@ -42,6 +62,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		B250B3F71BC13C9000426206 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B250B4011BC13C9000426206 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B250B4051BC13C9000426206 /* JTNetworkUtilitiesOSX.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B29C706D1BB403C2003CE110 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -60,13 +95,35 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B250B3FC1BC13C9000426206 /* JTNetworkUtilities OSX */ = {
+			isa = PBXGroup;
+			children = (
+				B250B3FD1BC13C9000426206 /* JTNetworkUtilitiesOSX.h */,
+				B250B3FF1BC13C9000426206 /* Info.plist */,
+			);
+			name = "JTNetworkUtilities OSX";
+			path = JTNetworkUtilitiesOSX;
+			sourceTree = "<group>";
+		};
+		B250B4081BC13C9000426206 /* JTNetworkUtilities OSX Tests */ = {
+			isa = PBXGroup;
+			children = (
+				B250B4091BC13C9000426206 /* JTNetworkUtilitiesOSXTests.swift */,
+				B250B40B1BC13C9000426206 /* Info.plist */,
+			);
+			name = "JTNetworkUtilities OSX Tests";
+			path = JTNetworkUtilitiesOSXTests;
+			sourceTree = "<group>";
+		};
 		B29C70671BB403C2003CE110 = {
 			isa = PBXGroup;
 			children = (
 				B242B16E1BB55B6F00832CDF /* TODO.md */,
 				B29C708B1BB403E9003CE110 /* Shared Framework Sources */,
 				B29C70731BB403C2003CE110 /* JTNetworkUtilities */,
-				B29C707F1BB403C2003CE110 /* JTNetworkUtilitiesTests */,
+				B29C707F1BB403C2003CE110 /* JTNetworkUtilities Tests */,
+				B250B3FC1BC13C9000426206 /* JTNetworkUtilities OSX */,
+				B250B4081BC13C9000426206 /* JTNetworkUtilities OSX Tests */,
 				B29C70721BB403C2003CE110 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -76,6 +133,8 @@
 			children = (
 				B29C70711BB403C2003CE110 /* JTNetworkUtilities.framework */,
 				B29C707B1BB403C2003CE110 /* JTNetworkUtilitiesTests.xctest */,
+				B250B3FB1BC13C9000426206 /* JTNetworkUtilitiesOSX.framework */,
+				B250B4041BC13C9000426206 /* JTNetworkUtilitiesOSXTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -89,12 +148,13 @@
 			path = JTNetworkUtilities;
 			sourceTree = "<group>";
 		};
-		B29C707F1BB403C2003CE110 /* JTNetworkUtilitiesTests */ = {
+		B29C707F1BB403C2003CE110 /* JTNetworkUtilities Tests */ = {
 			isa = PBXGroup;
 			children = (
 				B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */,
 				B29C70821BB403C2003CE110 /* Info.plist */,
 			);
+			name = "JTNetworkUtilities Tests";
 			path = JTNetworkUtilitiesTests;
 			sourceTree = "<group>";
 		};
@@ -112,6 +172,14 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		B250B3F81BC13C9000426206 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B250B3FE1BC13C9000426206 /* JTNetworkUtilitiesOSX.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B29C706E1BB403C2003CE110 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -123,6 +191,42 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		B250B3FA1BC13C9000426206 /* JTNetworkUtilitiesOSX */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B250B4101BC13C9000426206 /* Build configuration list for PBXNativeTarget "JTNetworkUtilitiesOSX" */;
+			buildPhases = (
+				B250B3F61BC13C9000426206 /* Sources */,
+				B250B3F71BC13C9000426206 /* Frameworks */,
+				B250B3F81BC13C9000426206 /* Headers */,
+				B250B3F91BC13C9000426206 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JTNetworkUtilitiesOSX;
+			productName = JTNetworkUtilitiesOSX;
+			productReference = B250B3FB1BC13C9000426206 /* JTNetworkUtilitiesOSX.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		B250B4031BC13C9000426206 /* JTNetworkUtilitiesOSXTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B250B4111BC13C9000426206 /* Build configuration list for PBXNativeTarget "JTNetworkUtilitiesOSXTests" */;
+			buildPhases = (
+				B250B4001BC13C9000426206 /* Sources */,
+				B250B4011BC13C9000426206 /* Frameworks */,
+				B250B4021BC13C9000426206 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B250B4071BC13C9000426206 /* PBXTargetDependency */,
+			);
+			name = JTNetworkUtilitiesOSXTests;
+			productName = JTNetworkUtilitiesOSXTests;
+			productReference = B250B4041BC13C9000426206 /* JTNetworkUtilitiesOSXTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		B29C70701BB403C2003CE110 /* JTNetworkUtilities */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B29C70851BB403C2003CE110 /* Build configuration list for PBXNativeTarget "JTNetworkUtilities" */;
@@ -169,6 +273,12 @@
 				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = "Josh Tway";
 				TargetAttributes = {
+					B250B3FA1BC13C9000426206 = {
+						CreatedOnToolsVersion = 7.0.1;
+					};
+					B250B4031BC13C9000426206 = {
+						CreatedOnToolsVersion = 7.0.1;
+					};
 					B29C70701BB403C2003CE110 = {
 						CreatedOnToolsVersion = 7.0;
 					};
@@ -191,11 +301,27 @@
 			targets = (
 				B29C70701BB403C2003CE110 /* JTNetworkUtilities */,
 				B29C707A1BB403C2003CE110 /* JTNetworkUtilitiesTests */,
+				B250B3FA1BC13C9000426206 /* JTNetworkUtilitiesOSX */,
+				B250B4031BC13C9000426206 /* JTNetworkUtilitiesOSXTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B250B3F91BC13C9000426206 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B250B4021BC13C9000426206 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B29C706F1BB403C2003CE110 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -213,6 +339,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B250B3F61BC13C9000426206 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B250B4141BC13CD400426206 /* Host.swift in Sources */,
+				B250B4121BC13CD400426206 /* Ping.swift in Sources */,
+				B250B4131BC13CD400426206 /* SocketAddress.swift in Sources */,
+				B250B4151BC13CD400426206 /* Util.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B250B4001BC13C9000426206 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B250B40A1BC13C9000426206 /* JTNetworkUtilitiesOSXTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B29C706C1BB403C2003CE110 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -236,6 +381,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		B250B4071BC13C9000426206 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B250B3FA1BC13C9000426206 /* JTNetworkUtilitiesOSX */;
+			targetProxy = B250B4061BC13C9000426206 /* PBXContainerItemProxy */;
+		};
 		B29C707E1BB403C2003CE110 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B29C70701BB403C2003CE110 /* JTNetworkUtilities */;
@@ -244,6 +394,72 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		B250B40C1BC13C9000426206 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = JTNetworkUtilitiesOSX/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jtway.JTNetworkUtilitiesOSX;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		B250B40D1BC13C9000426206 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = JTNetworkUtilitiesOSX/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jtway.JTNetworkUtilitiesOSX;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		B250B40E1BC13C9000426206 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = JTNetworkUtilitiesOSXTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jtway.JTNetworkUtilitiesOSXTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		B250B40F1BC13C9000426206 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = JTNetworkUtilitiesOSXTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jtway.JTNetworkUtilitiesOSXTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 		B29C70831BB403C2003CE110 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -391,6 +607,22 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B250B4101BC13C9000426206 /* Build configuration list for PBXNativeTarget "JTNetworkUtilitiesOSX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B250B40C1BC13C9000426206 /* Debug */,
+				B250B40D1BC13C9000426206 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		B250B4111BC13C9000426206 /* Build configuration list for PBXNativeTarget "JTNetworkUtilitiesOSXTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B250B40E1BC13C9000426206 /* Debug */,
+				B250B40F1BC13C9000426206 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		B29C706B1BB403C2003CE110 /* Build configuration list for PBXProject "JTNetworkUtilities" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
