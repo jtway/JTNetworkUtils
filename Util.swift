@@ -36,10 +36,10 @@ func saToHostname(sa: UnsafePointer<sockaddr>) -> String? {
 
 func hostnameToAddressStrings(hostname: String) -> [String]? {
 
-    var hints = addrinfo(ai_flags: 0,
+    var hints = addrinfo(ai_flags: AI_ADDRCONFIG,
                          ai_family: AF_UNSPEC,
-                         ai_socktype: SOCK_STREAM,
-                         ai_protocol: IPPROTO_TCP,
+                         ai_socktype: SOCK_DGRAM,
+                         ai_protocol: IPPROTO_IP,
                          ai_addrlen: 0,
                          ai_canonname: nil,
                          ai_addr: nil,
