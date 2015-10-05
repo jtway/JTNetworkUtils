@@ -12,7 +12,7 @@ import Foundation
 public class Host {
 
     /// Internal socket address structure for storing the socket address objects
-    private var socketAddresses: [SocketAddress] = [SocketAddress]()
+    private(set) var socketAddresses: [SocketAddress] = [SocketAddress]()
 
     // MARK: Hostname and ip address arrays
 
@@ -22,7 +22,7 @@ public class Host {
     private(set) var hostnames: [String] = [String]()
 
     /// All addresses associated with the host. If created with an IP Address we'll usually only have one
-    public var addresses: [String] {
+    public var ipAddresses: [String] {
         var ipAddresses = [String]()
         for socketAddress in socketAddresses {
             if let ipAddress = socketAddress.stringValue {
@@ -36,7 +36,7 @@ public class Host {
     // MARK: Single address/hostname accessors
 
     /// First IP Address in array of ip addresses, if any.
-    public var address: String? {
+    public var ipAddress: String? {
         if socketAddresses.count == 0 {
             return nil
         }
