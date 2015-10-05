@@ -11,8 +11,13 @@ import Foundation
 /// Container for hostnames and IP addresses. Can be created using a hostname, IPv4, or IPv6 addres.
 public class Host {
 
-    /// Internal socket address structure for storing the socket address objects
+    /// The actual SocketAddress objects for the host
     private(set) var socketAddresses: [SocketAddress] = [SocketAddress]()
+
+    /// Single socketAddress accessor, returns the first socketAddress
+    public var socketAddress: SocketAddress? {
+        return socketAddresses.first
+    }
 
     // MARK: Hostname and ip address arrays
 
@@ -24,6 +29,7 @@ public class Host {
     /// All addresses associated with the host. If created with an IP Address we'll usually only have one
     public var ipAddresses: [String] {
         var ipAddresses = [String]()
+        
         for socketAddress in socketAddresses {
             if let ipAddress = socketAddress.stringValue {
                 ipAddresses.append(ipAddress)
@@ -37,19 +43,11 @@ public class Host {
 
     /// First IP Address in array of ip addresses, if any.
     public var ipAddress: String? {
-        if socketAddresses.count == 0 {
-            return nil
-        }
-
         return socketAddresses.first?.stringValue
     }
 
     /// First hostname value in the array of hostnames, if any.
     public var hostname: String? {
-        if hostnames.count == 0 {
-            return nil
-        }
-
         return hostnames.first
     }
 
