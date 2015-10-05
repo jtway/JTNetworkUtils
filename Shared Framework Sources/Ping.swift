@@ -138,8 +138,6 @@ public class Ping {
 
     private var socketAddress: SocketAddress!
 
-    private var socketFd: Int32 = -1
-
     // MARK: - Initializers
 
     public init(hostname: String) {
@@ -204,9 +202,11 @@ public class Ping {
     }
 
     public func stop() {
-        close(socketFd)
-        
         if let source = responseSource {
+            let UDPSocket = Int32(dispatch_source_get_handle(source))
+
+            close(UDPSocket)
+
             dispatch_source_cancel(source)
             responseSource = nil
         }
@@ -317,16 +317,9 @@ public class Ping {
             return
         }
 
-        guard let endpoint = withUnsafePointer(&socketAddress, { self.getEndpointFromSocketAddress(UnsafePointer($0)) }) else {
-            print("Failed to get the address and port from the socket address received from recvfrom")
-            self.stop()
-            return
-        }
-
         let responseDatagram = NSData(bytes: UnsafePointer<Void>(response), length: bytesRead)
-        print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(endpoint.host) port = \(endpoint.port)")
-
-        let host = (self.hostname != nil ? self.hostname : self.hostIPAddress)
+        
+        print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(host.hostname)")
 
         if !self.isValidPingResponsePacket(responseDatagram.mutableCopy() as! NSMutableData) {
             print("Did not receive a valid ping response")
@@ -334,7 +327,7 @@ public class Ping {
             // Stop, aka close the socket
             self.stop()
             // Call ping response handler with negative time.
-            self.pingResponseHandler(ipAddress: host, latency: -1)
+            self.pingResponseHandler(ipAddress: host.hostname!, latency: -1)
             // @TODO Should I throw an error here? (Wish they would have called it emit error...)
 
             return
@@ -342,36 +335,10 @@ public class Ping {
 
         let latency = (pingResponseTime - self.pingSentTime) * 1000.0
 
-        self.pingResponseHandler(ipAddress: host, latency: latency)
+        self.pingResponseHandler(ipAddress: host.hostname!, latency: latency)
     }
 
     // MARK: - Utility methods
-
-    /// Convert a sockaddr structure into an IP address string and port.
-    func getEndpointFromSocketAddress(socketAddressPointer: UnsafePointer<sockaddr>) -> (host: String, port: Int)? {
-        let socketAddress = UnsafePointer<sockaddr>(socketAddressPointer).memory
-
-        switch Int32(socketAddress.sa_family) {
-        case AF_INET:
-            var socketAddressInet = UnsafePointer<sockaddr_in>(socketAddressPointer).memory
-            let length = Int(INET_ADDRSTRLEN) + 2
-            var buffer = [CChar](count: length, repeatedValue: 0)
-            let hostCString = inet_ntop(AF_INET, &socketAddressInet.sin_addr, &buffer, socklen_t(length))
-            let port = Int(UInt16(socketAddressInet.sin_port).byteSwapped)
-            return (String.fromCString(hostCString)!, port)
-
-        case AF_INET6:
-            var socketAddressInet6 = UnsafePointer<sockaddr_in6>(socketAddressPointer).memory
-            let length = Int(INET6_ADDRSTRLEN) + 2
-            var buffer = [CChar](count: length, repeatedValue: 0)
-            let hostCString = inet_ntop(AF_INET6, &socketAddressInet6.sin6_addr, &buffer, socklen_t(length))
-            let port = Int(UInt16(socketAddressInet6.sin6_port).byteSwapped)
-            return (String.fromCString(hostCString)!, port)
-
-        default:
-            return nil
-        }
-    }
 
     func generateICMPPacket() -> NSData {
 
@@ -516,47 +483,6 @@ public class Ping {
         print("IP Header length: \(ipHeaderLength)")
         return ipHeaderLength
     }
-
-//    static func icmp6HeaderOffsetInPacket(packet: NSData) -> Int {
-//        // Returns the offset of the ICMPHeader within an IP packet.
-//
-//        print("Size of IPHeader: \(sizeof(IP6Header.self)), size of ICMPEchoHeader: \(sizeof(Ping.ICMPEchoHeader.self))")
-//
-//        let expectedLength: Int = sizeof(IP6Header.self) + sizeof(Ping.ICMPEchoHeader.self)
-//
-//        print("Expected at least \(expectedLength) bytes, packet is \(packet.length) bytes")
-//
-//        if packet.length < expectedLength {
-//            print("Ping response was too small. Was only \(packet.length) bytes")
-//            return NSNotFound
-//        }
-//
-//        print("Response Packet: \(packet)")
-//
-//        print("Grabbing IP Header. Packet bytes: \(packet.bytes)")
-//        let ipHeader = UnsafePointer<IP6Header>(packet.bytes).memory
-//        print(ipHeader)
-//
-//        print("Version, TC, and Flow: \(ipHeader.versionAndTCAndFlow)")
-//        let version = (ipHeader.versionAndTCAndFlow & 0xF0000000)
-//        print("Version: \(version)")
-//        if (ipHeader.versionAndTCAndFlow & 0xF0000000) != 0x60000000 {
-//            print("Version mismatch")
-//            return NSNotFound
-//        }
-//
-//
-////        let ipHeaderLength = Int(ipHeader.versionAndHeaderLength & 0x0F) * sizeof(UInt32)
-////        if packet.length < ipHeaderLength + sizeof(Ping.ICMPEchoHeader.self) {
-////            print("Packet length too small")
-////            return NSNotFound
-////        }
-//
-//        let ipHeaderLength = Int(ipHeader.nextHeader)
-//
-//        print("IP Header length: \(ipHeaderLength)")
-//        return ipHeaderLength
-//    }
 
     static func icmpInPacket(packet: NSData) -> ICMPEchoHeader {
         let header : ICMPEchoHeader = ICMPEchoHeader()
