@@ -1,0 +1,14 @@
+.DS_Store
+
+build/
+*.pbxuser
+xcuserdata
+*.xccheckout
+profile
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+
+.bundle
+Pods/
