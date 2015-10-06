@@ -133,15 +133,13 @@ public class Ping {
     private var pingResponseHandler: PingResponseHandler!
 
     private var host: Host
-    private var hostname: String!
-    private var hostIPAddress: String!
 
-    private var socketAddress: SocketAddress!
+    /// convenience variable for storing the address family
+    private var family = AF_INET
 
     // MARK: - Initializers
 
     public init(hostname: String) {
-        self.hostname = hostname
         host = Host(hostname: hostname)
     }
 
@@ -151,23 +149,21 @@ public class Ping {
 
         pingResponseHandler = responseHandler
 
-        // @TODO Create a host class that is similar to NSHost
-        let addresses = hostnameToAddress(hostname)
-
-        socketAddress = addresses?.first
-
-        guard socketAddress != nil else {
+        guard let socketAddress = host.socketAddress else {
             return false
         }
 
+        family = socketAddress.family
+
         var socketFd : Int32 = -1
-        switch socketAddress.family {
-        case AF_INET:
-            socketFd = Darwin.socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
-        case AF_INET6:
-            socketFd = Darwin.socket(AF_INET6, SOCK_DGRAM, IPPROTO_ICMPV6)
-        default:
-            break
+
+        switch family {
+            case AF_INET:
+                socketFd = Darwin.socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
+            case AF_INET6:
+                socketFd = Darwin.socket(AF_INET6, SOCK_DGRAM, IPPROTO_ICMPV6)
+            default:
+                break
         }
 
         // @TODO error handling
@@ -215,13 +211,16 @@ public class Ping {
     // MARK: - Send Ping & Read Ping Response
 
     func sendPing() throws {
-
-        var sent: Int = -1
-        var error: Int32 = 0
+        guard let socketAddress = host.socketAddress else {
+            return
+        }
 
         guard let source = responseSource else {
             return
         }
+
+        var sent: Int = -1
+        var error: Int32 = 0
 
         let UDPSocket = Int32(dispatch_source_get_handle(source))
 
@@ -236,18 +235,14 @@ public class Ping {
 
         // Send the packet.
 
-        if hostname == nil {
-            hostname = socketAddress.stringValue
-        }
-
-        if socketAddress.family == AF_INET {
-            if let socketAddress4: SocketAddress4 = self.socketAddress as? SocketAddress4 {
+        if family == AF_INET {
+            if let socketAddress4: SocketAddress4 = socketAddress as? SocketAddress4 {
                 sent = withUnsafePointer(&socketAddress4.sin) {
                     sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(socketAddress4.sin.sin_len))
                 }
             }
         } else if socketAddress.family == AF_INET6 {
-            if let socketAddress6: SocketAddress6 = self.socketAddress as? SocketAddress6 {
+            if let socketAddress6: SocketAddress6 = socketAddress as? SocketAddress6 {
                 sent = withUnsafePointer(&socketAddress6.sin6) {
                     sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(socketAddress6.sin6.sin6_len))
                 }
@@ -275,22 +270,26 @@ public class Ping {
     }
 
     func readData() {
+        guard let socketAddress = host.socketAddress else {
+            return
+        }
+
         guard let source = self.responseSource else {
             print("Unable to get source")
             return
         }
 
-        var socketAddress = sockaddr_storage()
+        var socketAddressStorage = sockaddr_storage()
         var socketAddressLength = socklen_t(sizeof(sockaddr_storage.self))
 
         // This seems a bit hacky but it appears to be the best way to get "this" the way we want
-        if self.socketAddress.family == AF_INET {
-            if let socketAddress4: SocketAddress4 = self.socketAddress as? SocketAddress4 {
-                memcpy(&socketAddress, &socketAddress4.sin, sizeof(sockaddr_in))
+        if family == AF_INET {
+            if let socketAddress4: SocketAddress4 = socketAddress as? SocketAddress4 {
+                memcpy(&socketAddressStorage, &socketAddress4.sin, sizeof(sockaddr_in))
             }
         } else {
-            if let socketAddress6: SocketAddress6 = self.socketAddress as? SocketAddress6 {
-                memcpy(&socketAddress, &socketAddress6.sin6, sizeof(sockaddr_in6))
+            if let socketAddress6: SocketAddress6 = socketAddress as? SocketAddress6 {
+                memcpy(&socketAddressStorage, &socketAddress6.sin6, sizeof(sockaddr_in6))
             }
         }
 
@@ -299,7 +298,7 @@ public class Ping {
 
         let pingResponseTime = NSDate().timeIntervalSince1970
 
-        let bytesRead = withUnsafeMutablePointer(&socketAddress) {
+        let bytesRead = withUnsafeMutablePointer(&socketAddressStorage) {
             recvfrom(UDPSocket, UnsafeMutablePointer<Void>(response), response.count, 0, UnsafeMutablePointer($0), &socketAddressLength)
         }
 
@@ -357,11 +356,12 @@ public class Ping {
         //   With that in mind for code readabilty we're going to copy the header and payload into the final packet.
         var icmpEchoPacket = ICMPEchoHeader()
 
-        if socketAddress.family == AF_INET {
-            icmpEchoPacket.type = ICMPType.EchoRequest.rawValue
-        } else {
+        if host.socketAddress?.family == AF_INET6 {
             icmpEchoPacket.type = ICMP6Type.EchoRequest.rawValue
+        } else {
+            icmpEchoPacket.type = ICMPType.EchoRequest.rawValue
         }
+
         icmpEchoPacket.code = 0
         icmpEchoPacket.checksum = 0
         icmpEchoPacket.identifier = CFSwapInt16HostToBig(identifier)
@@ -381,23 +381,19 @@ public class Ping {
 
     func isValidPingResponsePacket(packet: NSMutableData) -> Bool {
 
-        print("Validating ping response")
         let icmpHeaderOffset: Int
 
-        if (socketAddress.family == AF_INET) {
+        if (family == AF_INET) {
             icmpHeaderOffset = Ping.icmpHeaderOffsetInPacket(packet)
-        } else if (socketAddress.family == AF_INET6) {
+        } else {
             // The IP header is not passed back from ICMPv6 using UDP
             icmpHeaderOffset = 0
-        } else {
-            return false
         }
 
         if icmpHeaderOffset == NSNotFound {
             return false
         }
 
-        print("Found ping offset: \(icmpHeaderOffset)")
         let icmpHeaderPtr : UnsafePointer<ICMPEchoHeader> = UnsafePointer<ICMPEchoHeader>(packet.mutableBytes + icmpHeaderOffset)
 
         var icmpHeader: ICMPEchoHeader = icmpHeaderPtr.memory
@@ -407,7 +403,7 @@ public class Ping {
 
         memcpy(UnsafeMutablePointer<Void>(icmpHeaderPtr), &icmpHeader, sizeof(ICMPEchoHeader.self))
 
-        if (socketAddress.family == AF_INET) {
+        if (family == AF_INET) {
             let calculatedCheckSum: UInt16 = Ping.checksumIn(packet.mutableBytes + icmpHeaderOffset, length: packet.length - icmpHeaderOffset)
 
             if receivedCheckSum != calculatedCheckSum {
@@ -450,18 +446,13 @@ public class Ping {
     static func icmpHeaderOffsetInPacket(packet: NSData) -> Int {
         // Returns the offset of the ICMPHeader within an IP packet.
 
-        print("Size of IPHeader: \(sizeof(IPHeader.self)), size of ICMPEchoHeader: \(sizeof(Ping.ICMPEchoHeader.self))")
-
         let expectedLength: Int = sizeof(IPHeader.self) + sizeof(Ping.ICMPEchoHeader.self)
-
-        print("Expected at least \(expectedLength) bytes, packet is \(packet.length) bytes")
 
         if packet.length < expectedLength {
             print("Ping response was too small. Was only \(packet.length) bytes")
             return NSNotFound
         }
 
-        print("Grabbing IP Header. Packet bytes: \(packet.bytes)")
         let ipHeader = UnsafePointer<IPHeader>(packet.bytes).memory
         print(ipHeader)
         if (ipHeader.versionAndHeaderLength & 0xF0) != 0x40 {
@@ -480,7 +471,6 @@ public class Ping {
             return NSNotFound
         }
 
-        print("IP Header length: \(ipHeaderLength)")
         return ipHeaderLength
     }
 
