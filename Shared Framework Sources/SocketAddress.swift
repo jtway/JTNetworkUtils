@@ -8,16 +8,19 @@
 
 import Foundation
 
+/// Protocol for SocketAddresses to conform to
 public protocol SocketAddress {
 
+    /// IP address as a string
     var stringValue: String? { get }
 
+    /// Family (AF_INET or AF_INET6)
     var family: Int32 { get }
-//
-//    var sockaddrStorage: sockaddr_storage { get }
 
+    /// Set SocketAddress from IP address string
     func setFromString(str: String) -> Bool
 
+    /// Set port
     func setPort(port: Int)
 }
 
@@ -37,10 +40,6 @@ public class SocketAddress6: SocketAddress {
     public var family: Int32 {
         return AF_INET6
     }
-//
-//    public var sockaddrStorage: sockaddr_storage {
-//
-//    }
 
     // MARK: Initializers
 
@@ -86,10 +85,6 @@ public class SocketAddress4: SocketAddress {
     public var family: Int32 {
         return AF_INET
     }
-
-//    public var sockaddrStorage: sockaddr_storage {
-//        
-//    }
 
     // MARK: Initializers
 
