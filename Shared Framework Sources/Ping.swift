@@ -10,11 +10,8 @@ import Foundation
 import Dispatch
 import Darwin
 
-// @TODO Add ICMP6EchoHeader
-
 // MARK: - IP Header
 
-// @TODO Find a new home for this and fix sourceAddress and destinationAddress (in C they are both an array of 4 uint8_t)
 public struct IPHeader {
     var versionAndHeaderLength: UInt8   = 0
     var differentiatedServices: UInt8   = 0
@@ -55,10 +52,13 @@ public class Ping {
     // MARK: - Ping enums
 
     public enum PingError: ErrorType {
+        case NoSocketAddress
+        case NoDispatchSource
         case BadFileDescriptor
         case Failed
+        case FailedEndOfFile
         case InvalidPingResponse
-        case POSIXErrorCode(posixError: Int)
+        case POSIXErrorCode(posixError: Int32)
     }
 
     public enum ICMPType: UInt8 {
@@ -95,10 +95,10 @@ public class Ping {
     // MARK: - ICMP Echo Header
 
     public struct ICMPEchoHeader {
-        var type: UInt8 = 0
-        var code: UInt8 = 0
-        var checksum: UInt16 = 0
-        var identifier: UInt16 = 0
+        var type:           UInt8  = 0
+        var code:           UInt8  = 0
+        var checksum:       UInt16 = 0
+        var identifier:     UInt16 = 0
         var sequenceNumber: UInt16 = 0
     }
 
@@ -184,7 +184,9 @@ public class Ping {
         }
 
         dispatch_source_set_event_handler(newResponseSource) {
-            self.readData()
+            // @TOOD How to catch the error and do something useful with it? This could get called down the road
+            //   so start would have already returned.
+            try! self.readData()
         }
 
         dispatch_resume(newResponseSource)
@@ -212,15 +214,14 @@ public class Ping {
 
     func sendPing() throws {
         guard let socketAddress = host.socketAddress else {
-            return
+            throw PingError.NoSocketAddress
         }
 
         guard let source = responseSource else {
-            return
+            throw PingError.NoDispatchSource
         }
 
         var sent: Int = -1
-        var error: Int32 = 0
 
         let UDPSocket = Int32(dispatch_source_get_handle(source))
 
@@ -230,8 +231,6 @@ public class Ping {
         }
 
         let packet = generateICMPPacket()
-
-        print(packet)
 
         // Send the packet.
 
@@ -251,7 +250,8 @@ public class Ping {
 
         pingSentTime = NSDate().timeIntervalSince1970
 
-        error = 0;
+        var error: Int32 = 0
+
         if sent < 0 {
             error = errno;
         }
@@ -265,18 +265,18 @@ public class Ping {
             if error == 0 {
                 error = ENOBUFS
             }
-            return
+            throw PingError.POSIXErrorCode(posixError: error)
         }
     }
 
-    func readData() {
+    func readData() throws {
         guard let socketAddress = host.socketAddress else {
-            return
+            throw PingError.NoSocketAddress
         }
 
         guard let source = self.responseSource else {
             print("Unable to get source")
-            return
+            throw PingError.NoDispatchSource
         }
 
         var socketAddressStorage = sockaddr_storage()
@@ -302,18 +302,24 @@ public class Ping {
             recvfrom(UDPSocket, UnsafeMutablePointer<Void>(response), response.count, 0, UnsafeMutablePointer($0), &socketAddressLength)
         }
 
-        guard bytesRead >= 0 else {
-            if let errorString = String(UTF8String: strerror(errno)) {
-                print("recvfrom failed: \(errorString)")
+        var error: Int32 = 0
+
+        if bytesRead < 0 {
+            if error == 0 {
+                error = ENOBUFS
             }
+
+//            if let errorString = String(UTF8String: strerror(error)) {
+//                print("recvfrom failed: \(errorString)")
+//            }
             self.stop()
-            return
+            throw PingError.POSIXErrorCode(posixError: error)
         }
 
         guard bytesRead > 0 else {
             print("recvfrom returned EOF")
             self.stop()
-            return
+            throw PingError.FailedEndOfFile
         }
 
         let responseDatagram = NSData(bytes: UnsafePointer<Void>(response), length: bytesRead)
@@ -321,15 +327,14 @@ public class Ping {
         print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(host.hostname)")
 
         if !self.isValidPingResponsePacket(responseDatagram.mutableCopy() as! NSMutableData) {
-            print("Did not receive a valid ping response")
-
             // Stop, aka close the socket
             self.stop()
+
+            // @TODO Should I still do this if I'm throwing an error?
             // Call ping response handler with negative time.
             self.pingResponseHandler(ipAddress: host.hostname!, latency: -1)
-            // @TODO Should I throw an error here? (Wish they would have called it emit error...)
 
-            return
+            throw PingError.InvalidPingResponse
         }
 
         let latency = (pingResponseTime - self.pingSentTime) * 1000.0
@@ -342,7 +347,7 @@ public class Ping {
     func generateICMPPacket() -> NSData {
 
         // Construct the ping packet.
-        // @TODO Should probably use guard
+
         let payLoadLength = Int(configuration.payloadSizeInBytes) - sizeof(ICMPEchoHeader.self)
         let payload : NSMutableData = NSMutableData(length: payLoadLength)!
 
@@ -489,29 +494,26 @@ public class Ping {
 
         let cursor : UnsafePointer<UInt16> = UnsafePointer<UInt16>(buffer)
 
-        /*
-        * Our algorithm is simple, using a 32 bit accumulator (sum), we add
-        * sequential 16 bit words to it, and at the end, fold back all the
-        * carry bits from the top 16 bits into the lower 16 bits.
-        */
+        // Our algorithm is simple, using a 32 bit accumulator (sum), we add sequential 16 bit words to it, 
+        // and at the end, fold back all the carry bits from the top 16 bits into the lower 16 bits.
         var index: Int = 0
+
         while bytesRemaining > 1 {
-            //            print("\(cursor[index] as UInt16)")
             sum += Int32(cursor[index])
             
             index++
             bytesRemaining -= 2
         }
         
-        /* mop up an odd byte, if necessary */
+        // mop up an odd byte, if necessary
         if bytesRemaining == 1 {
             // @TODO How the heck should I do this without creating another unsafe pointer?
             print("We should do something here")
         }
         
-        /* add back carry outs from top 16 bits to low 16 bits */
-        sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
-        sum += (sum >> 16);			/* add carry */
+        // add back carry outs from top 16 bits to low 16 bits
+        sum = (sum >> 16) + (sum & 0xffff);	// add hi 16 to low 16
+        sum += (sum >> 16);			        // add carry
         
         let answer : UInt16 = UInt16(sum)
         
