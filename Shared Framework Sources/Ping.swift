@@ -214,11 +214,11 @@ public class Ping {
 
             dispatch_source_cancel(source)
             responseSource = nil
-        }
 
-        // @TOOD I don't really like this...
-        if completionHandler != nil {
-            completionHandler()
+            // @TOOD I don't really like this...
+            if completionHandler != nil {
+                completionHandler()
+            }
         }
     }
 
