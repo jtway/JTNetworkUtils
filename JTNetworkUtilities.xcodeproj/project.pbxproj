@@ -17,12 +17,10 @@
 		B26266D71BB813360031F3E5 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26266D61BB813360031F3E5 /* Util.swift */; settings = {ASSET_TAGS = (); }; };
 		B29C70751BB403C2003CE110 /* JTNetworkUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = B29C70741BB403C2003CE110 /* JTNetworkUtilities.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B29C707C1BB403C2003CE110 /* JTNetworkUtilities.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B29C70711BB403C2003CE110 /* JTNetworkUtilities.framework */; settings = {ASSET_TAGS = (); }; };
-		B29C70811BB403C2003CE110 /* JTNetworkUtilitiesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */; };
 		B29C708D1BB4059A003CE110 /* Ping.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C708C1BB4059A003CE110 /* Ping.swift */; settings = {ASSET_TAGS = (); }; };
 		B29C708F1BB40A43003CE110 /* SocketAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C708E1BB40A43003CE110 /* SocketAddress.swift */; settings = {ASSET_TAGS = (); }; };
 		B2DDAF8C1BCFAF0200D639E9 /* UtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DDAF8B1BCFAF0200D639E9 /* UtilTests.swift */; settings = {ASSET_TAGS = (); }; };
 		B2DDAF8E1BCFAF4D00D639E9 /* UtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DDAF8B1BCFAF0200D639E9 /* UtilTests.swift */; settings = {ASSET_TAGS = (); }; };
-		B2DDAF8F1BCFAF5000D639E9 /* JTNetworkUtilitiesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */; settings = {ASSET_TAGS = (); }; };
 		B2DDAF941BCFB14000D639E9 /* HostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DDAF931BCFB14000D639E9 /* HostTests.swift */; settings = {ASSET_TAGS = (); }; };
 		B2DDAF951BCFB14000D639E9 /* HostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DDAF931BCFB14000D639E9 /* HostTests.swift */; settings = {ASSET_TAGS = (); }; };
 		B2DDAF971BCFB7AF00D639E9 /* PingQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DDAF961BCFB7AF00D639E9 /* PingQueue.swift */; settings = {ASSET_TAGS = (); }; };
@@ -61,7 +59,6 @@
 		B29C70741BB403C2003CE110 /* JTNetworkUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JTNetworkUtilities.h; sourceTree = "<group>"; };
 		B29C70761BB403C2003CE110 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B29C707B1BB403C2003CE110 /* JTNetworkUtilitiesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JTNetworkUtilitiesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = JTNetworkUtilitiesTests.swift; path = JTNetworkUtilitiesTests/JTNetworkUtilitiesTests.swift; sourceTree = "<group>"; };
 		B29C70821BB403C2003CE110 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B29C708C1BB4059A003CE110 /* Ping.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Ping.swift; path = "Shared Framework Sources/Ping.swift"; sourceTree = "<group>"; };
 		B29C708E1BB40A43003CE110 /* SocketAddress.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SocketAddress.swift; path = "Shared Framework Sources/SocketAddress.swift"; sourceTree = "<group>"; };
@@ -181,7 +178,6 @@
 		B2DDAF8D1BCFAF1900D639E9 /* Shared Tests */ = {
 			isa = PBXGroup;
 			children = (
-				B29C70801BB403C2003CE110 /* JTNetworkUtilitiesTests.swift */,
 				B2DDAF8B1BCFAF0200D639E9 /* UtilTests.swift */,
 				B2DDAF931BCFB14000D639E9 /* HostTests.swift */,
 				B2DDAF9B1BCFB81A00D639E9 /* PingTests.swift */,
@@ -385,7 +381,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B2DDAF8E1BCFAF4D00D639E9 /* UtilTests.swift in Sources */,
-				B2DDAF8F1BCFAF5000D639E9 /* JTNetworkUtilitiesTests.swift in Sources */,
 				B2DDAF951BCFB14000D639E9 /* HostTests.swift in Sources */,
 				B2DDAF9D1BCFB81A00D639E9 /* PingTests.swift in Sources */,
 			);
@@ -407,7 +402,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B29C70811BB403C2003CE110 /* JTNetworkUtilitiesTests.swift in Sources */,
 				B2DDAF8C1BCFAF0200D639E9 /* UtilTests.swift in Sources */,
 				B2DDAF941BCFB14000D639E9 /* HostTests.swift in Sources */,
 				B2DDAF9C1BCFB81A00D639E9 /* PingTests.swift in Sources */,
