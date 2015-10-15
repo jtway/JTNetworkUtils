@@ -36,15 +36,22 @@ public struct IP6Header {
 }
 
 public struct PingResponse {
-    init(hostname: String, ipAddress: String, latency: Double) {
-        self.hostname = hostname
-        self.ipAddress = ipAddress
+    public enum Result: UInt32 {
+        case Success
+        case Timeout
+        case BadResponse
+        case UnableToResolve
+        case Error
+    }
+
+    init(host: Host, latency: Double) {
+        self.host = host
         self.latency = latency
     }
 
-    var hostname: String
-    var ipAddress: String
-    var latency: Double = 0
+    var host: Host
+    var latency: Double = -1
+    var result: Result = .Error
 }
 
 public class Ping {
@@ -89,7 +96,7 @@ public class Ping {
         var timeoutInSeconds:    Double = 10.0 // unused (should be though)
         var timeToLiveInSeconds: UInt32 = 0    // unused (should be though)
         var payloadSizeInBytes:  UInt16 = 64
-        var count:               UInt32 = 1
+        var count:               UInt16 = 1
     }
 
     // MARK: - ICMP Echo Header
@@ -111,8 +118,9 @@ public class Ping {
 
     // MARK: - completion handlers
 
-    public typealias PingResponseHandler = (ipAddress : String, latency : NSTimeInterval) -> Void
-    public typealias PingCompletionHandler = (ipAddress : String, avgLatency : NSTimeInterval, successful : UInt, dropped : UInt) -> Void
+    public typealias PingResponseHandler = (response: PingResponse) -> Void
+//    public typealias PingCompletionHandler = (ipAddress : String, avgLatency : NSTimeInterval, successful : UInt, dropped : UInt) -> Void
+    public typealias PingCompletionHandler = () -> Void
 
     // MARK: - Public Properties
 
@@ -129,7 +137,7 @@ public class Ping {
     private var nextSequenceNumber: UInt16 = 1
     private var pingSentTime: NSTimeInterval = 0
 
-    private var completionHandler: PingCompletionHandler!
+    public var completionHandler: PingCompletionHandler!
     private var pingResponseHandler: PingResponseHandler!
 
     private var host: Host
@@ -186,7 +194,7 @@ public class Ping {
         dispatch_source_set_event_handler(newResponseSource) {
             // @TOOD How to catch the error and do something useful with it? This could get called down the road
             //   so start would have already returned.
-            try! self.readData()
+            self.readData()
         }
 
         dispatch_resume(newResponseSource)
@@ -200,13 +208,17 @@ public class Ping {
     }
 
     public func stop() {
-        if let source = responseSource {
+        if let source: dispatch_source_t = self.responseSource {
             let UDPSocket = Int32(dispatch_source_get_handle(source))
-
             close(UDPSocket)
 
             dispatch_source_cancel(source)
             responseSource = nil
+        }
+
+        // @TOOD I don't really like this...
+        if completionHandler != nil {
+            completionHandler()
         }
     }
 
@@ -267,16 +279,31 @@ public class Ping {
             }
             throw PingError.POSIXErrorCode(posixError: error)
         }
+
+        if nextSequenceNumber <= configuration.count {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(configuration.intervalInMS) * Int64(NSEC_PER_MSEC)), dispatchQueue) {
+                try! self.sendPing()
+            }
+        }
     }
 
-    func readData() throws {
+    func readData() {
+        var pingResponse = PingResponse(host: host, latency: -1)
+
         guard let socketAddress = host.socketAddress else {
-            throw PingError.NoSocketAddress
+            pingResponseHandler(response: pingResponse)
+            stop()
+
+            return
         }
 
         guard let source = self.responseSource else {
             print("Unable to get source")
-            throw PingError.NoDispatchSource
+
+            pingResponseHandler(response: pingResponse)
+            stop()
+
+            return
         }
 
         var socketAddressStorage = sockaddr_storage()
@@ -305,26 +332,37 @@ public class Ping {
         var error: Int32 = 0
 
         if bytesRead < 0 {
+            error = errno
+
             if error == 0 {
                 error = ENOBUFS
             }
 
-//            if let errorString = String(UTF8String: strerror(error)) {
-//                print("recvfrom failed: \(errorString)")
-//            }
+            if let errorString = String(UTF8String: strerror(error)) {
+                print("recvfrom failed: \(errorString)")
+            }
+
+            // @TODO Be more specific here, but I'm not sure I want to use an associated value enum for PingResponse.Result
+            pingResponseHandler(response: pingResponse)
+
             self.stop()
-            throw PingError.POSIXErrorCode(posixError: error)
+            return
         }
 
         guard bytesRead > 0 else {
             print("recvfrom returned EOF")
+
+            pingResponseHandler(response: pingResponse)
+
             self.stop()
-            throw PingError.FailedEndOfFile
+            return
         }
 
         let responseDatagram = NSData(bytes: UnsafePointer<Void>(response), length: bytesRead)
         
-        print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(host.hostname)")
+        print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(host.hostname!)")
+
+
 
         if !self.isValidPingResponsePacket(responseDatagram.mutableCopy() as! NSMutableData) {
             // Stop, aka close the socket
@@ -332,14 +370,20 @@ public class Ping {
 
             // @TODO Should I still do this if I'm throwing an error?
             // Call ping response handler with negative time.
-            self.pingResponseHandler(ipAddress: host.hostname!, latency: -1)
+            pingResponse.result = .BadResponse
+            self.pingResponseHandler(response: pingResponse)
 
-            throw PingError.InvalidPingResponse
+            return
         }
 
-        let latency = (pingResponseTime - self.pingSentTime) * 1000.0
+        pingResponse.result = .Success
+        pingResponse.latency = (pingResponseTime - self.pingSentTime) * 1000.0
 
-        self.pingResponseHandler(ipAddress: host.hostname!, latency: latency)
+        self.pingResponseHandler(response: pingResponse)
+
+        if nextSequenceNumber > configuration.count {
+            stop()
+        }
     }
 
     // MARK: - Utility methods
@@ -459,7 +503,7 @@ public class Ping {
         }
 
         let ipHeader = UnsafePointer<IPHeader>(packet.bytes).memory
-        print(ipHeader)
+
         if (ipHeader.versionAndHeaderLength & 0xF0) != 0x40 {
             print("Version mismatch")
             return NSNotFound

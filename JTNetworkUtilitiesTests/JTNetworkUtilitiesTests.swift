@@ -29,9 +29,9 @@ class JTNetworkUtilitiesTests: XCTestCase {
         let pingTest = Ping(hostname: "www.jtway.com")
         pingTest.dispatchQueue = queue
 
-        pingTest.start { (ipAddress, latency) in
+        pingTest.start { (response) in
             // Do something
-            print("Ping response handler called. IP: \(ipAddress), Latency: \(latency)ms")
+            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
             pingTest.stop()
             pingExpectation.fulfill()
         }
@@ -49,9 +49,9 @@ class JTNetworkUtilitiesTests: XCTestCase {
         let pingTest = Ping(hostname: "2600:3c02::f03c:91ff:fe6e:993c")
         pingTest.dispatchQueue = queue
 
-        pingTest.start { (ipAddress, latency) in
+        pingTest.start { (response) in
             // Do something
-            print("Ping response handler called. IP: \(ipAddress), Latency: \(latency)ms")
+            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
             pingTest.stop()
             pingExpectation.fulfill()
         }

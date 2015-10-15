@@ -29,14 +29,39 @@ class JTNetworkUtilitiesOSXTests: XCTestCase {
         let pingTest = Ping(hostname: "www.jtway.com")
         pingTest.dispatchQueue = queue
 
-        pingTest.start { (ipAddress, latency) in
+        pingTest.start { (response) in
             // Do something
-            print("Ping response handler called. IP: \(ipAddress), Latency: \(latency)ms")
+            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
             pingTest.stop()
             pingExpectation.fulfill()
         }
 
         waitForExpectationsWithTimeout(6.0) { error in
+            if error != nil {
+                print("Test completion handler called with error. \(error!.localizedDescription)")
+            }
+        }
+    }
+
+    func testMultiplePings() {
+        let pingExpectation = expectationWithDescription("Ping call expectation")
+
+        let numPings: UInt16 = 10
+
+        let pingTest = Ping(hostname: "www.jtway.com")
+        pingTest.configuration.count = numPings
+        pingTest.dispatchQueue = queue
+
+        pingTest.completionHandler = {
+            pingExpectation.fulfill()
+        }
+
+        pingTest.start { (response) in
+            // Do something
+            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
+        }
+
+        waitForExpectationsWithTimeout(Double(numPings) * 2.0) { error in
             if error != nil {
                 print("Test completion handler called with error. \(error!.localizedDescription)")
             }
@@ -49,9 +74,9 @@ class JTNetworkUtilitiesOSXTests: XCTestCase {
         let pingTest = Ping(hostname: "2600:3c02::f03c:91ff:fe6e:993c")
         pingTest.dispatchQueue = queue
 
-        pingTest.start { (ipAddress, latency) in
+        pingTest.start { (response) in
             // Do something
-            print("Ping response handler called. IP: \(ipAddress), Latency: \(latency)ms")
+            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
             pingTest.stop()
             pingExpectation.fulfill()
         }
