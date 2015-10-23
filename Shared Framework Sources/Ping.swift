@@ -54,7 +54,11 @@ public struct PingResponse {
     var result: Result = .Error
 }
 
-public class Ping {
+public func ==(lhs: Ping, rhs: Ping) -> Bool {
+    return lhs.hashValue == rhs.hashValue
+}
+
+public class Ping: Hashable {
 
     // MARK: - Ping enums
 
@@ -119,8 +123,7 @@ public class Ping {
     // MARK: - completion handlers
 
     public typealias PingResponseHandler = (response: PingResponse) -> Void
-//    public typealias PingCompletionHandler = (ipAddress : String, avgLatency : NSTimeInterval, successful : UInt, dropped : UInt) -> Void
-    public typealias PingCompletionHandler = () -> Void
+    public typealias PingCompletionHandler = (responses: [PingResponse]) -> Void
 
     // MARK: - Public Properties
 
@@ -133,17 +136,28 @@ public class Ping {
     /// A dispatch source for reading data from the UDP socket.
     private var responseSource: dispatch_source_t?
 
+    // Perhaps this should be moved into the configuraiton?
     private let identifier: UInt16 = UInt16(arc4random_uniform(UInt32(UINT16_MAX)))
+
     private var nextSequenceNumber: UInt16 = 1
     private var pingSentTime: NSTimeInterval = 0
 
     public var completionHandler: PingCompletionHandler!
-    private var pingResponseHandler: PingResponseHandler!
+    public var pingResponseHandler: PingResponseHandler!
 
     private var host: Host
 
     /// convenience variable for storing the address family
     private var family = AF_INET
+
+    private var responses: [PingResponse] = [PingResponse]()
+
+
+    // MARK: - Hashable
+    
+    public var hashValue: Int {
+        return host.hostname!.hashValue ^ Int(identifier)
+    }
 
     // MARK: - Initializers
 
@@ -151,12 +165,13 @@ public class Ping {
         host = Host(hostname: hostname)
     }
 
+    public init(host: Host) {
+        self.host = host
+    }
+
     // MARK: - Ping start/stop public methods
 
-    public func start(responseHandler: PingResponseHandler) -> Bool {
-
-        pingResponseHandler = responseHandler
-
+    public func start() -> Bool {
         guard let socketAddress = host.socketAddress else {
             return false
         }
@@ -180,6 +195,34 @@ public class Ping {
             return false
         }
 
+        var socketAddressStorage = sockaddr_storage()
+        var socketAddressLength = socklen_t(sizeof(sockaddr_storage.self))
+
+        // This seems a bit hacky but it appears to be the best way to get "this" the way we want
+        if family == AF_INET {
+            if let socketAddress4: SocketAddress4 = socketAddress as? SocketAddress4 {
+                memcpy(&socketAddressStorage, &socketAddress4.sin, sizeof(sockaddr_in))
+                socketAddressLength = socklen_t(socketAddress4.sin.sin_len)
+            }
+        } else {
+            if let socketAddress6: SocketAddress6 = socketAddress as? SocketAddress6 {
+                memcpy(&socketAddressStorage, &socketAddress6.sin6, sizeof(sockaddr_in6))
+                socketAddressLength = socklen_t(socketAddress6.sin6.sin6_len)
+            }
+        }
+
+        let connectResult = withUnsafePointer(&socketAddressStorage) {
+            Darwin.connect(socketFd, UnsafePointer($0), socketAddressLength)
+        }
+
+        guard connectResult == 0 else {
+            print("Unable to connect to destination.")
+            if let errorString = String(UTF8String: strerror(errno)) {
+                print("connect failed: \(errorString)")
+            }
+            return false
+        }
+
         guard let newResponseSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, UInt(socketFd), 0, dispatchQueue) else {
             print("Unable to set dispatch read source")
             close(socketFd)
@@ -187,6 +230,7 @@ public class Ping {
         }
 
         dispatch_source_set_cancel_handler(newResponseSource) {
+            // a bit circular here. stop calls dispatch_cancel, which in turn calls this.
             print("closing udp socket for connection \(self.identifier)")
             self.stop()
         }
@@ -200,7 +244,7 @@ public class Ping {
         dispatch_resume(newResponseSource)
         responseSource = newResponseSource
 
-        print("Sending ping")
+        print("Sending ping to \(host.hostname!)")
         
         try! sendPing()
 
@@ -212,33 +256,28 @@ public class Ping {
             let UDPSocket = Int32(dispatch_source_get_handle(source))
             close(UDPSocket)
 
+            // This causes stop to be called again.
             dispatch_source_cancel(source)
             responseSource = nil
 
-            // @TOOD I don't really like this...
             if completionHandler != nil {
-                completionHandler()
+                completionHandler(responses: responses)
             }
         }
     }
 
     // MARK: - Send Ping & Read Ping Response
 
+    // We're async here so throw probably won't help us
     func sendPing() throws {
-        guard let socketAddress = host.socketAddress else {
-            throw PingError.NoSocketAddress
-        }
 
         guard let source = responseSource else {
             throw PingError.NoDispatchSource
         }
 
-        var sent: Int = -1
-
         let UDPSocket = Int32(dispatch_source_get_handle(source))
 
         guard UDPSocket >= 0 else {
-            sent = -1
             throw PingError.BadFileDescriptor
         }
 
@@ -246,19 +285,7 @@ public class Ping {
 
         // Send the packet.
 
-        if family == AF_INET {
-            if let socketAddress4: SocketAddress4 = socketAddress as? SocketAddress4 {
-                sent = withUnsafePointer(&socketAddress4.sin) {
-                    sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(socketAddress4.sin.sin_len))
-                }
-            }
-        } else if socketAddress.family == AF_INET6 {
-            if let socketAddress6: SocketAddress6 = socketAddress as? SocketAddress6 {
-                sent = withUnsafePointer(&socketAddress6.sin6) {
-                    sendto(UDPSocket, packet.bytes, packet.length, 0, UnsafePointer($0), socklen_t(socketAddress6.sin6.sin6_len))
-                }
-            }
-        }
+        let sent = send(UDPSocket, packet.bytes, packet.length, 0)
 
         pingSentTime = NSDate().timeIntervalSince1970
 
@@ -273,10 +300,16 @@ public class Ping {
 
         // Handle the results of the send.
         if sent <= 0 || sent != packet.length {
-            print("Unable to send ping")
+            if let errorString = String(UTF8String: strerror(errno)) {
+                print("Unable to send ping: \(errorString)")
+            } else {
+                print("Unable to send ping")
+            }
+
             if error == 0 {
                 error = ENOBUFS
             }
+
             throw PingError.POSIXErrorCode(posixError: error)
         }
 
@@ -300,7 +333,9 @@ public class Ping {
         guard let source = self.responseSource else {
             print("Unable to get source")
 
-            pingResponseHandler(response: pingResponse)
+            if pingResponseHandler != nil {
+                pingResponseHandler(response: pingResponse)
+            }
             stop()
 
             return
@@ -342,36 +377,39 @@ public class Ping {
                 print("recvfrom failed: \(errorString)")
             }
 
+            responses.append(pingResponse)
             // @TODO Be more specific here, but I'm not sure I want to use an associated value enum for PingResponse.Result
-            pingResponseHandler(response: pingResponse)
-
+            if pingResponseHandler != nil {
+                pingResponseHandler(response: pingResponse)
+            }
             self.stop()
+
             return
         }
 
         guard bytesRead > 0 else {
             print("recvfrom returned EOF")
 
-            pingResponseHandler(response: pingResponse)
-
+            responses.append(pingResponse)
+            if pingResponseHandler != nil {
+                pingResponseHandler(response: pingResponse)
+            }
             self.stop()
+
             return
         }
 
         let responseDatagram = NSData(bytes: UnsafePointer<Void>(response), length: bytesRead)
-        
-        print("UDP connection id \(self.identifier) received = \(bytesRead) bytes from host = \(host.hostname!)")
-
-
 
         if !self.isValidPingResponsePacket(responseDatagram.mutableCopy() as! NSMutableData) {
+
+            pingResponse.result = .BadResponse
+            if pingResponseHandler != nil {
+                pingResponseHandler(response: pingResponse)
+            }
+
             // Stop, aka close the socket
             self.stop()
-
-            // @TODO Should I still do this if I'm throwing an error?
-            // Call ping response handler with negative time.
-            pingResponse.result = .BadResponse
-            self.pingResponseHandler(response: pingResponse)
 
             return
         }
@@ -379,7 +417,11 @@ public class Ping {
         pingResponse.result = .Success
         pingResponse.latency = (pingResponseTime - self.pingSentTime) * 1000.0
 
-        self.pingResponseHandler(response: pingResponse)
+        responses.append(pingResponse)
+        
+        if pingResponseHandler != nil {
+            pingResponseHandler(response: pingResponse)
+        }
 
         if nextSequenceNumber > configuration.count {
             stop()
@@ -477,7 +519,7 @@ public class Ping {
         }
 
         if identifier != CFSwapInt16BigToHost(icmpHeader.identifier) {
-            print("Identifier did not match our identifier")
+            print("Identifier did not match our identifier. Ours: \(identifier), theirs: \(CFSwapInt16BigToHost(icmpHeader.identifier))")
             return false
         }
 
