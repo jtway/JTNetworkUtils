@@ -27,6 +27,15 @@ class PingTests: XCTestCase {
         super.tearDown()
     }
 
+    func printPingResponses(responses: [PingResponse]) {
+        print("\(responses.first!.host.hostname!) (\(responses.first!.host.ipAddress!)):")
+
+        for response: PingResponse in responses {
+            let formattedLatency = String(format: "%.3f", response.latency)
+            print("  Latency: \(formattedLatency)ms")
+        }
+    }
+
     func testPing() {
 
         let pingExpectation = expectationWithDescription("Ping call expectation")
@@ -34,12 +43,14 @@ class PingTests: XCTestCase {
         let pingTest = Ping(hostname: "www.jtway.com")
         pingTest.dispatchQueue = queue
 
-        pingTest.start { (response) in
-            // Do something
-            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
-            pingTest.stop()
-            pingExpectation.fulfill()
+        pingTest.completionHandler = { (responses) in
+                // Do something
+                self.printPingResponses(responses)
+                pingTest.stop()
+                pingExpectation.fulfill()
         }
+
+        pingTest.start()
 
         waitForExpectationsWithTimeout(6.0) { error in
             if error != nil {
@@ -57,14 +68,17 @@ class PingTests: XCTestCase {
         pingTest.configuration.count = numPings
         pingTest.dispatchQueue = queue
 
-        pingTest.completionHandler = {
+        pingTest.pingResponseHandler = { (response) in
+            let formattedLatency = String(format: "%.3f", response.latency)
+            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(formattedLatency)ms")
+        }
+
+        pingTest.completionHandler = { pingResponses in
+            self.printPingResponses(pingResponses)
             pingExpectation.fulfill()
         }
 
-        pingTest.start { (response) in
-            // Do something
-            print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(response.latency)ms")
-        }
+        pingTest.start()
 
         waitForExpectationsWithTimeout(Double(numPings) * 2.0) { error in
             if error != nil {
@@ -94,4 +108,19 @@ class PingTests: XCTestCase {
     //        }
     //    }
 
+    func testPingQueue() {
+
+        let hostnames: [String] = [ "www.ox.ac.uk", "www.jtway.com", "www.google.com" ]
+
+        let pingQueue: PingQueue = PingQueue()
+
+        for hostname in hostnames {
+            pingQueue.pingOnce(hostname) { (response) in
+                let formattedLatency = String(format: "%.3f", response.latency)
+                print("\(response.host.hostname!) (\(response.host.ipAddress!)), Latency: \(formattedLatency)ms")
+            }
+        }
+
+        pingQueue.waitForAllPingsToComplete()
+    }
 }
