@@ -54,8 +54,12 @@ public class PingQueue {
         ping.start()
     }
 
-    func waitForAllPingsToComplete() {
+    func waitForPingsToComplete(timeout: Double) {
         // If a ping doesn't get a reply this will wait forever, which isn't really what I want
-        dispatch_group_wait(dispatchGroup, DISPATCH_TIME_FOREVER)
+        if dispatch_group_wait(dispatchGroup, dispatch_time(DISPATCH_TIME_NOW, Int64(timeout * Double(NSEC_PER_SEC)))) != 0 {
+            for ping in pings {
+                ping.stop()
+            }
+        }
     }
 }

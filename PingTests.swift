@@ -121,6 +121,6 @@ class PingTests: XCTestCase {
             }
         }
 
-        pingQueue.waitForAllPingsToComplete()
+        pingQueue.waitForPingsToComplete(5.0)
     }
 }
