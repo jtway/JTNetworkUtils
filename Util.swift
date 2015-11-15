@@ -131,3 +131,13 @@ func hostnameToAddress(hostname: String) -> [SocketAddress]? {
     
     return addresses
 }
+
+func timevalDiff(firstTV: timeval, secondTV: timeval) -> Double {
+    let firstSeconds: Double = Double(firstTV.tv_sec) + (Double(firstTV.tv_usec) / Double(USEC_PER_SEC))
+    let secondSeconds: Double = Double(secondTV.tv_sec) + (Double(secondTV.tv_usec) / Double(USEC_PER_SEC))
+
+    let diff = firstSeconds - secondSeconds
+    return diff
+}
+
+
