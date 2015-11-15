@@ -59,6 +59,30 @@ class PingTests: XCTestCase {
         }
     }
 
+//    func testBadPing() {
+//
+//        let pingExpectation = expectationWithDescription("Ping call expectation")
+//
+//        let pingTest = Ping(hostname: "blah.jtway.com")
+//        pingTest.dispatchQueue = queue
+//        pingTest.configuration.timeoutInSeconds = 1.0
+//
+//        pingTest.completionHandler = { (responses) in
+//            // Do something
+//            self.printPingResponses(responses)
+//            pingTest.stop()
+//            pingExpectation.fulfill()
+//        }
+//
+//        pingTest.start()
+//
+//        waitForExpectationsWithTimeout(6.0) { error in
+//            if error != nil {
+//                print("Test completion handler called with error. \(error!.localizedDescription)")
+//            }
+//        }
+//    }
+
     func testMultiplePings() {
         let pingExpectation = expectationWithDescription("Ping call expectation")
 
